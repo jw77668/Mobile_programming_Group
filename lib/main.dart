@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'SettingPage.dart';
 import 'WasherListPage.dart';
-
+import 'LoginPage.dart';
+import 'HomePage.dart';
 void main() {
   runApp(MyApp());
 }
