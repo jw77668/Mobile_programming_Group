@@ -19,7 +19,7 @@ class _SmartGuideAppState extends State<SmartGuideApp> {
   int _currentIndex = 0;
 
   final _pages = [// todo
-    // const HomePage(),
+     const HomePage(),
     // const FindWasherPage(),
     // const ChatbotPage(),
     // const SettingsPage(),
