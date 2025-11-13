@@ -1,14 +1,63 @@
-
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'find_washer.dart';
+import 'manual_viewer_page.dart';
+import '../models/washer_model.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  WasherModel? _myWasher;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyWasher();
+  }
+
+  Future<void> _loadMyWasher() async {
+    final prefs = await SharedPreferences.getInstance();
+    final washerCode = prefs.getString('my_washer_code');
+
+    if (washerCode != null) {
+      final washers = WasherModel.getDefaultWashers();
+      setState(() {
+        _myWasher = washers.firstWhere(
+          (w) => w.washerCode == washerCode,
+          orElse: () => washers.first,
+        );
+      });
+    }
+  }
+
+  Future<void> _navigateToFindWasher() async {
+    final result = await Navigator.push<WasherModel>(
+      context,
+      MaterialPageRoute(builder: (context) => const FindWasherPage()),
+    );
+
+    if (result != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('my_washer_code', result.washerCode);
+      setState(() {
+        _myWasher = result;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Smart Guide', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Smart Guide',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -69,14 +118,17 @@ class HomePage extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         if (title == '내 제품 목록')
           CircleAvatar(
             backgroundColor: Colors.blueAccent,
             radius: 16,
             child: IconButton(
               icon: const Icon(Icons.add, color: Colors.white, size: 16),
-              onPressed: () {},
+              onPressed: _navigateToFindWasher,
             ),
           ),
       ],
@@ -84,40 +136,79 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildProductList() {
+    if (_myWasher == null) {
+      return SizedBox(
+        height: 150,
+        child: Center(
+          child: Text(
+            '아직 내 세탁기가 설정되지 않았습니다',
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 150,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        children: [
-          _buildProductCard('LG 트롬 세탁기'),
-        ],
+        children: [_buildProductCard(_myWasher!)],
       ),
     );
   }
 
-  Widget _buildProductCard(String name) {
-    return Card(
-      elevation: 2,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        width: 120,
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
+  Widget _buildProductCard(WasherModel washer) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ManualViewerPage()),
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 2,
+        shadowColor: Colors.black12,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          width: 120,
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              Expanded(
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    washer.imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.local_laundry_service,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                // TODO: Replace with actual image
-                child: const Center(child: Icon(Icons.local_laundry_service, size: 40, color: Colors.grey)),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(name, style: const TextStyle(fontWeight: FontWeight.w500)),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                washer.washerName,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -154,15 +245,9 @@ class HomePage extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          ListTile(
-            title: const Text('냉장고 문 닫힘 문제'),
-            onTap: () {},
-          ),
+          ListTile(title: const Text('냉장고 문 닫힘 문제'), onTap: () {}),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          ListTile(
-            title: const Text('세탁기 탈수 안됨'),
-            onTap: () {},
-          ),
+          ListTile(title: const Text('세탁기 탈수 안됨'), onTap: () {}),
         ],
       ),
     );
