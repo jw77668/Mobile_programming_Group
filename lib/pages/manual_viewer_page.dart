@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../models/washer_model.dart';
 
 class ManualViewerPage extends StatefulWidget {
@@ -96,38 +97,19 @@ class _ManualViewerPageState extends State<ManualViewerPage> {
                     ],
                   ),
                 ),
-                // PDF 뷰어 영역 (추후 구현)
+                // PDF 뷰어 영역
                 Expanded(
-                  child: Container(
-                    color: Colors.grey[100],
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.picture_as_pdf,
-                            size: 80,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'PDF 뷰어 영역',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[600],
+                  child: SfPdfViewer.asset(
+                    _myWasher!.manualPath,
+                    onDocumentLoadFailed:
+                        (PdfDocumentLoadFailedDetails details) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('PDF 로드 실패: ${details.error}'),
+                              backgroundColor: Colors.red,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '설명서: ${_myWasher!.manualPath}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                          );
+                        },
                   ),
                 ),
               ],

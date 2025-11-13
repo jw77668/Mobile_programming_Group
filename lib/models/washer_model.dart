@@ -35,25 +35,25 @@ class WasherModel {
       WasherModel(
         washerCode: 'LG FX25VS',
         washerName: 'LG 트롬 세탁기',
-        manualPath: 'assets/pdf/LG_FX25VS.pdf',
+        manualPath: 'assets/data/LG_FX25VS.pdf',
         imagePath: 'assets/images/FX25VS.png',
       ),
       WasherModel(
         washerCode: 'LG T1203S6',
         washerName: 'LG 16kg 통돌이 세탁기',
-        manualPath: 'assets/pdf/LG_T1203S6.pdf',
+        manualPath: 'assets/data/LG_T1203S6.pdf',
         imagePath: 'assets/images/T1203S6.png',
       ),
       WasherModel(
         washerCode: 'LG T20BVD',
         washerName: 'LG 21kg 통톨이 세탁기',
-        manualPath: 'assets/pdf/LG_T20BVD.pdf',
+        manualPath: 'assets/data/LG_T20BVD.pdf',
         imagePath: 'assets/images/T20BVD.png',
       ),
       WasherModel(
         washerCode: 'LG T15DUA',
         washerName: 'LG 드럼 세탁기',
-        manualPath: 'assets/pdf/LG_T15DUA.pdf',
+        manualPath: 'assets/data/LG_T15DUA.pdf',
         imagePath: 'assets/images/T15DUA.png',
       ),
     ];
