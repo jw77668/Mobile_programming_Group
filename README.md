@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # smart_guide
 
 A new Flutter project.
@@ -14,3 +15,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Mobile_programming_Group
+>>>>>>> 01a56203f71a58b3d098b5a78e17e301d0fb0cb6
