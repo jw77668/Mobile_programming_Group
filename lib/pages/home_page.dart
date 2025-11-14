@@ -59,8 +59,6 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -83,14 +81,14 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      backgroundColor: Colors.white,
     );
   }
 
   Widget _buildSearchCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 0,
-      color: const Color(0xFF1F222A),
+      color: isDark ? const Color(0xFF1F222A) : const Color(0xFF2C2F33),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
       child: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -184,15 +182,15 @@ class _HomePageState extends State<HomePage> {
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.local_laundry_service,
-                            size: 40,
-                            color: Colors.grey,
-                          ),
+                        child: Icon(
+                          Icons.local_laundry_service,
+                          size: 40,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       );
                     },
@@ -230,10 +228,12 @@ class _HomePageState extends State<HomePage> {
   Widget _buildFaqChip(String label) {
     return Chip(
       label: Text(label),
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.grey[300]!),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+        ),
       ),
     );
   }
