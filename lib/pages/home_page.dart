@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'find_washer.dart';
 import 'manual_viewer_page.dart';
 import '../models/washer_model.dart';
+import 'chatbot_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -36,6 +37,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _navigateToFindWasher() async {
+    // 버튼 클릭 시 로그 확인을 위한 print문 추가
+    print("Navigating to FindWasherPage...");
     final result = await Navigator.push<WasherModel>(
       context,
       MaterialPageRoute(builder: (context) => const FindWasherPage()),
@@ -59,6 +62,8 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -81,30 +86,39 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+      backgroundColor: Colors.white,
     );
   }
 
   Widget _buildSearchCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      elevation: 0,
-      color: isDark ? const Color(0xFF1F222A) : const Color(0xFF2C2F33),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8.0),
-        child: TextField(
-          style: TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            icon: Padding(
-              padding: EdgeInsets.only(left: 12.0),
-              child: Icon(Icons.search, color: Colors.white54, size: 20),
-            ),
-            hintText: '무엇을 도와드릴까요? (예: 전원이 안 켜져요)',
-            hintStyle: TextStyle(color: Colors.white54),
-            border: InputBorder.none,
-            suffixIcon: CircleAvatar(
-              backgroundColor: Colors.blueAccent,
-              child: Icon(Icons.arrow_forward, color: Colors.white),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatbotPage()),
+        );
+      },
+      child: Card(
+        elevation: 0,
+        color: const Color(0xFF1F222A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.0),
+          child: TextField(
+            enabled: false,
+            style: TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              icon: Padding(
+                padding: EdgeInsets.only(left: 12.0),
+                child: Icon(Icons.search, color: Colors.white54, size: 20),
+              ),
+              hintText: '무엇을 도와드릴까요? (예: 전원이 안 켜져요)',
+              hintStyle: TextStyle(color: Colors.white54),
+              border: InputBorder.none,
+              suffixIcon: CircleAvatar(
+                backgroundColor: Colors.blueAccent,
+                child: Icon(Icons.arrow_forward, color: Colors.white),
+              ),
             ),
           ),
         ),
@@ -182,15 +196,15 @@ class _HomePageState extends State<HomePage> {
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHighest,
+                          color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
-                          Icons.local_laundry_service,
-                          size: 40,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        child: const Center(
+                          child: Icon(
+                            Icons.local_laundry_service,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
                         ),
                       );
                     },
@@ -228,12 +242,10 @@ class _HomePageState extends State<HomePage> {
   Widget _buildFaqChip(String label) {
     return Chip(
       label: Text(label),
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      backgroundColor: Colors.grey[200],
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-        ),
+        side: BorderSide(color: Colors.grey[300]!),
       ),
     );
   }
