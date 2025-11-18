@@ -4,7 +4,7 @@ import 'find_washer.dart';
 import 'manual_viewer_page.dart';
 import '../models/washer_model.dart';
 import 'chatbot_page.dart';
-
+import 'notes_list_page.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -52,6 +52,14 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+  //메모장
+  void _navigateToNoteList() {
+    print("Navigating to NoteListPage...");
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NoteListPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,10 +91,46 @@ class _HomePageState extends State<HomePage> {
             _buildSectionHeader(context, '최근 해결 기록'),
             const SizedBox(height: 12),
             _buildRecentHistory(),
+            //내 메모 블록 추가
+            const SizedBox(height: 24),
+            _buildSectionHeader(context, '내 메모'),
+            const SizedBox(height: 12),
+            _buildMemoSection(),
           ],
         ),
       ),
       backgroundColor: Colors.white,
+    );
+  }
+  //내 메모 섹션
+  Widget _buildMemoSection() {
+    return InkWell(
+      onTap: _navigateToNoteList, // 메모 페이지 이동 함수 호출
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 2,
+        shadowColor: Colors.black12,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 4.0),
+          child: ListTile(
+            leading: Icon(
+              Icons.note_alt,
+              color: Colors.blueAccent, // 기존 디자인의 아이콘 색상 활용
+              size: 28,
+            ),
+            title: Text(
+              '메모 리스트', // 메모장 리스트로 이동함을 명확히 표시
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.grey,
+              size: 18,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
