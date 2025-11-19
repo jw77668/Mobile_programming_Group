@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,9 +20,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    final appDocumentDirectory = await getApplicationDocumentsDirectory();
-    await Hive.initFlutter(appDocumentDirectory.path);
+    if (kIsWeb) {
 
+      await Hive.initFlutter();
+    } else {
+
+      final appDocumentDirectory = await getApplicationDocumentsDirectory();
+      await Hive.initFlutter(appDocumentDirectory.path);
+    }
+
+    // 어댑터 등록 (한 번만 실행되도록 확인)
     if (!Hive.isAdapterRegistered(NoteAdapter().typeId)) {
       Hive.registerAdapter(NoteAdapter());
     }
@@ -29,7 +37,7 @@ void main() async {
       Hive.registerAdapter(NoteTypeAdapter());
     }
 
-    // ⭐️ Box 열기 작업을 notes_list_page.dart로 이전했으므로 이 줄을 삭제합니다.
+    await Hive.openBox<Note>('notesBox_v3');
 
   } catch (e) {
     print('main.dart에서 Hive 초기화 중 치명적인 오류 발생: $e');
@@ -79,6 +87,7 @@ class SmartGuideApp extends StatelessWidget {
     );
   }
 }
+
 
 class AuthChecker extends StatefulWidget {
   const AuthChecker({super.key});

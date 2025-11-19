@@ -21,14 +21,10 @@ class _NoteEditPageState extends State<NoteEditPage> {
   late Note _currentNote;
   bool _isNewNote = false;
 
-  late FocusNode _contentFocusNode;
-
   @override
   void initState() {
     super.initState();
     _isNewNote = widget.note == null;
-
-    _contentFocusNode = FocusNode();
 
     if (_isNewNote) {
       _currentNote = Note(
@@ -65,7 +61,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
   void dispose() {
     _titleController.dispose();
     _quillController.dispose();
-    _contentFocusNode.dispose();
     super.dispose();
   }
 
@@ -74,6 +69,18 @@ class _NoteEditPageState extends State<NoteEditPage> {
     _currentNote.content = jsonEncode(_quillController.document.toDelta().toJson());
     _currentNote.modifiedDate = DateTime.now();
     Navigator.pop(context, _currentNote);
+  }
+
+  Future<void> _handleImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile != null) {
+      final index = _quillController.selection.baseOffset;
+      final length = _quillController.selection.extentOffset - index;
+      _quillController.replaceText(
+          index, length, BlockEmbed.image(pickedFile.path), null);
+    }
   }
 
   void _showImageSourceActionSheet() {
@@ -102,18 +109,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _handleImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
-
-    if (pickedFile != null) {
-      final index = _quillController.selection.baseOffset;
-      final length = _quillController.selection.extentOffset - index;
-      _quillController.replaceText(
-          index, length, BlockEmbed.image(pickedFile.path), null);
-    }
   }
 
   @override
@@ -154,7 +149,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
           QuillSimpleToolbar(
             controller: _quillController,
             config: const QuillSimpleToolbarConfig(
-              showSearchButton: true, // ⭐️ 검색 버튼 활성화
+              showSearchButton: true,
               showFontFamily: false,
               showCodeBlock: false,
               showQuote: false,
