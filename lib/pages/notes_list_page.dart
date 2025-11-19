@@ -5,9 +5,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'note_editor_page.dart';
 import 'note_models.dart';
 
-// ------------------------------------
-// 2. 메모 목록 페이지 (NoteListPage)
-// ------------------------------------
 class NoteListPage extends StatefulWidget {
   const NoteListPage({super.key});
 
@@ -16,31 +13,23 @@ class NoteListPage extends StatefulWidget {
 }
 
 class _NoteListPageState extends State<NoteListPage> {
-  Box<Note>? _notesBox;
+  late final Future<Box<Note>> _notesBoxFuture;
   SortOption _sortOption = SortOption.modifiedDateDesc;
 
   @override
   void initState() {
     super.initState();
-    _openBox();
+    // ⭐️ 페이지가 시작될 때 데이터베이스를 여는 작업을 시작합니다.
+    _notesBoxFuture = _initDatabase();
   }
 
-  Future<void> _openBox() async {
-    final box = await Hive.openBox<Note>('notesBox');
-    if (mounted) {
-      setState(() {
-        _notesBox = box;
-      });
-    }
+  Future<Box<Note>> _initDatabase() async {
+    // ⭐️ 이 페이지가 직접 Box를 엽니다.
+    return await Hive.openBox<Note>('notesBox');
   }
 
-  List<Note> get _sortedNotes {
-    final list = _notesBox!.values.toList();
-    _sort(list);
-    return list;
-  }
-
-  void _sort(List<Note> list) {
+  List<Note> _getSortedNotes(Box<Note> box) {
+    final list = box.values.toList();
     switch (_sortOption) {
       case SortOption.modifiedDateDesc:
         list.sort((a, b) => b.modifiedDate.compareTo(a.modifiedDate));
@@ -55,104 +44,105 @@ class _NoteListPageState extends State<NoteListPage> {
         list.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
         break;
     }
+    return list;
   }
 
-  void _sortNotes() {
-    setState(() {});
-  }
-
-  Future<void> _navigateToNoteEditor(Note? note) async {
+  Future<void> _navigateToNoteEditor(BuildContext context, Box<Note> box, Note? note) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => NoteEditPage(note: note),
-      ),
+      MaterialPageRoute(builder: (context) => NoteEditPage(note: note)),
     );
 
     if (result is Note) {
-      await _notesBox!.put(result.id, result);
-      // ValueListenableBuilder가 업데이트를 처리하므로 _sortNotes() 호출이 필수는 아님
-    }
-  }
-
-  String get _sortOptionText {
-    switch (_sortOption) {
-      case SortOption.modifiedDateDesc:
-        return '수정 날짜 순 (최신)';
-      case SortOption.modifiedDateAsc:
-        return '수정 날짜 순 (오래됨)';
-      case SortOption.titleAsc:
-        return '제목 순 (가나다)';
-      case SortOption.titleDesc:
-        return '제목 순 (다나가)';
+      await box.put(result.id, result);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_notesBox == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    return Scaffold(
+      appBar: _buildAppBar(),
+      // ⭐️ FutureBuilder를 사용하여 Box가 열릴 때까지 기다립니다.
+      body: FutureBuilder<Box<Note>>(
+        future: _notesBoxFuture,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text('데이터 로딩 중 오류가 발생했습니다.\n오류: ${snapshot.error}'),
+              ),
+            );
+          }
+          if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-    return ValueListenableBuilder<Box<Note>>(
-      valueListenable: _notesBox!.listenable(),
-      builder: (context, box, _) {
-        final notes = _sortedNotes;
+          final notesBox = snapshot.data!;
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text(
-              'Smart Guide',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            centerTitle: true,
-            backgroundColor: Colors.white,
-            elevation: 0,
-            foregroundColor: Colors.black,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Navigator.pop(context),
-            ),
-            actions: const [],
-          ),
-          body: notes.isEmpty
-              ? const Center(child: Text('첫 메모를 작성해주세요.'))
-              : SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildNoteListHeader(),
-                const SizedBox(height: 16),
-                _buildNoteGrid(notes),
-              ],
-            ),
-          ),
-          backgroundColor: Colors.white,
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _navigateToNoteEditor(null),
-            tooltip: '새 노트 생성하기',
-            backgroundColor: Colors.blueAccent,
-            child: const Icon(Icons.add, color: Colors.white),
-          ),
-        );
-      },
+          // ⭐️ Box가 준비되면, 실시간으로 화면을 그립니다.
+          return ValueListenableBuilder<Box<Note>>(
+            valueListenable: notesBox.listenable(),
+            builder: (context, box, _) {
+              final notes = _getSortedNotes(box);
+              return CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: _buildNoteListHeader(notes.length),
+                    ),
+                  ),
+                  notes.isEmpty
+                      ? const SliverFillRemaining(
+                          child: Center(child: Text('첫 메모를 작성해주세요.')),
+                        )
+                      : _buildNoteGrid(notes, box),
+                ],
+              );
+            },
+          );
+        },
+      ),
+      backgroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // ⭐️ Box가 열릴 때까지 기다린 후 페이지 이동
+          final box = await _notesBoxFuture;
+          _navigateToNoteEditor(context, box, null);
+        },
+        tooltip: '새 노트 생성하기',
+        backgroundColor: Colors.orangeAccent,
+        child: const Icon(Icons.edit, color: Colors.white),
+      ),
     );
   }
 
-  Widget _buildNoteListHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          '모든 노트',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      foregroundColor: Colors.black,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () { /* TODO: 검색 기능 구현 */ },
         ),
+      ],
+    );
+  }
+
+  Widget _buildNoteListHeader(int noteCount) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
         DropdownButton<SortOption>(
           value: _sortOption,
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black, size: 20),
+          icon: const Icon(Icons.arrow_downward, color: Colors.black, size: 16),
           underline: const SizedBox.shrink(),
           onChanged: (SortOption? newValue) {
             if (newValue != null) {
@@ -162,121 +152,37 @@ class _NoteListPageState extends State<NoteListPage> {
             }
           },
           items: const [
-            DropdownMenuItem(
-              value: SortOption.modifiedDateDesc,
-              child: Text('수정 날짜 순 (최신)', style: TextStyle(color: Colors.black, fontSize: 14)),
-            ),
-            DropdownMenuItem(
-              value: SortOption.modifiedDateAsc,
-              child: Text('수정 날짜 순 (오래됨)', style: TextStyle(color: Colors.black, fontSize: 14)),
-            ),
-            DropdownMenuItem(
-              value: SortOption.titleAsc,
-              child: Text('제목 순 (가나다)', style: TextStyle(color: Colors.black, fontSize: 14)),
-            ),
-            DropdownMenuItem(
-              value: SortOption.titleDesc,
-              child: Text('제목 순 (다나가)', style: TextStyle(color: Colors.black, fontSize: 14)),
-            ),
+            DropdownMenuItem(value: SortOption.modifiedDateDesc, child: Text('수정 날짜 순', style: TextStyle(fontSize: 14))),
+            DropdownMenuItem(value: SortOption.modifiedDateAsc, child: Text('오래된 순', style: TextStyle(fontSize: 14))),
+            DropdownMenuItem(value: SortOption.titleAsc, child: Text('제목 오름차순', style: TextStyle(fontSize: 14))),
+            DropdownMenuItem(value: SortOption.titleDesc, child: Text('제목 내림차순', style: TextStyle(fontSize: 14))),
           ],
-          hint: Text(_sortOptionText, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
         ),
       ],
     );
   }
 
-  Widget _buildNoteGrid(List<Note> notes) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8.0,
-        mainAxisSpacing: 8.0,
-        childAspectRatio: 0.7,
+  Widget _buildNoteGrid(List<Note> notes, Box<Note> box) {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16.0),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12.0,
+          mainAxisSpacing: 12.0,
+          childAspectRatio: 0.8,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final note = notes[index];
+            return NoteCard(
+              note: note,
+              onTap: () => _navigateToNoteEditor(context, box, note),
+            );
+          },
+          childCount: notes.length,
+        ),
       ),
-      itemCount: notes.length,
-      itemBuilder: (context, index) {
-        final note = notes[index];
-        return NoteCard(
-          note: note,
-          onTap: () => _navigateToNoteEditor(note),
-          onLongPress: () => _showContextMenu(context, note),
-        );
-      },
-    );
-  }
-
-  void _showContextMenu(BuildContext context, Note note) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit, color: Colors.black),
-                title: const Text('이름 편집', style: TextStyle(color: Colors.black)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showRenameDialog(context, note);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('삭제', style: TextStyle(color: Colors.red)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _notesBox!.delete(note.id);
-                  print('노트 ${note.title} 삭제 완료');
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showRenameDialog(BuildContext context, Note note) {
-    TextEditingController controller = TextEditingController(text: note.title);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('노트 이름 편집', style: TextStyle(color: Colors.black)),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            style: const TextStyle(color: Colors.black),
-            decoration: const InputDecoration(
-              hintText: "새로운 이름을 입력하세요",
-              hintStyle: TextStyle(color: Colors.grey),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('취소', style: TextStyle(color: Colors.grey)),
-            ),
-            TextButton(
-              onPressed: () {
-                note.title = controller.text;
-                _notesBox!.put(note.id, note);
-                Navigator.pop(context);
-              },
-              child: const Text('확인', style: TextStyle(color: Colors.blueAccent)),
-            ),
-          ],
-        );
-      },
     );
   }
 }
@@ -284,78 +190,45 @@ class _NoteListPageState extends State<NoteListPage> {
 class NoteCard extends StatelessWidget {
   final Note note;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
 
-  const NoteCard({
-    super.key,
-    required this.note,
-    required this.onTap,
-    required this.onLongPress,
-  });
+  const NoteCard({super.key, required this.note, required this.onTap});
 
-  // ⭐️ JSON 형식의 노드 내용을 일반 텍스트로 변환하는 헬퍼 함수
   String _getPlainText(String content) {
-    if (content.isEmpty) {
-      return '';
-    }
+    if (content.isEmpty) return '';
     try {
-      // JSON 형식인지 확인하고 파싱
       final List<dynamic> jsonData = jsonDecode(content);
       final doc = Document.fromJson(jsonData);
-      // 순수 텍스트로 변환하여 반환
       return doc.toPlainText().trim();
     } catch (e) {
-      // JSON 파싱에 실패하면, 일반 텍스트로 간주하고 그대로 반환
       return content;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // ⭐️ 변환된 텍스트를 가져옵니다.
     final plainTextContent = _getPlainText(note.content);
-
     return InkWell(
       onTap: onTap,
-      onLongPress: onLongPress,
       borderRadius: BorderRadius.circular(12),
       child: Card(
-        elevation: 2,
-        shadowColor: Colors.black12,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: Colors.white,
+        elevation: 1.5,
+        shadowColor: Colors.black26,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey.shade200, width: 1),
+        ),
         child: Container(
           padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: note.type == NoteType.Locked ? Colors.grey : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Center(
-                    child: note.type == NoteType.Locked
-                        ? const Icon(Icons.lock, color: Colors.grey, size: 30)
-                        // ⭐️ 변환된 plainTextContent를 사용합니다.
-                        : Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        plainTextContent.isEmpty ? '내용 없음' : plainTextContent,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                        ),
-                        maxLines: 7,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
+                child: Text(
+                  plainTextContent.isEmpty ? '내용 없음' : plainTextContent,
+                  style: const TextStyle(color: Colors.black87, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 8,
                 ),
               ),
               const SizedBox(height: 8),
@@ -363,18 +236,12 @@ class NoteCard extends StatelessWidget {
                 note.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 15),
               ),
+              const SizedBox(height: 4),
               Text(
                 note.dateString,
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ],
           ),

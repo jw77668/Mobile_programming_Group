@@ -22,14 +22,19 @@ void main() async {
     final appDocumentDirectory = await getApplicationDocumentsDirectory();
     await Hive.initFlutter(appDocumentDirectory.path);
 
-    Hive.registerAdapter(NoteAdapter());
-    Hive.registerAdapter(NoteTypeAdapter());
+    if (!Hive.isAdapterRegistered(NoteAdapter().typeId)) {
+      Hive.registerAdapter(NoteAdapter());
+    }
+    if (!Hive.isAdapterRegistered(NoteTypeAdapter().typeId)) {
+      Hive.registerAdapter(NoteTypeAdapter());
+    }
 
-    await Hive.openBox<Note>('notesBox');
+    // ⭐️ Box 열기 작업을 notes_list_page.dart로 이전했으므로 이 줄을 삭제합니다.
+
   } catch (e) {
-    print('main.dart에서 Hive 초기화 중 오류 발생: $e');
+    print('main.dart에서 Hive 초기화 중 치명적인 오류 발생: $e');
   }
-
+  
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
@@ -62,11 +67,11 @@ class SmartGuideApp extends StatelessWidget {
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
-            FlutterQuillLocalizations.delegate, // Quill을 위한 설정
+            FlutterQuillLocalizations.delegate,
           ],
           supportedLocales: const [
-            Locale('ko'), // 한국어 지원
-            Locale('en'), // 기본으로 영어 지원
+            Locale('ko'),
+            Locale('en'),
           ],
           home: const AuthChecker(),
         );
