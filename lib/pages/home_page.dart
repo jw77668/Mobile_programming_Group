@@ -108,9 +108,11 @@ class _HomePageState extends State<HomePage> {
       onTap: _navigateToNoteList, // 메모 페이지 이동 함수 호출
       borderRadius: BorderRadius.circular(12),
       child: Card(
-        elevation: 2,
-        shadowColor: Colors.black12,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey[300]!),
+        ),
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: 4.0),
           child: ListTile(
@@ -223,9 +225,11 @@ class _HomePageState extends State<HomePage> {
       },
       borderRadius: BorderRadius.circular(12),
       child: Card(
-        elevation: 2,
-        shadowColor: Colors.black12,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey[300]!),
+        ),
         child: Container(
           width: 120,
           padding: const EdgeInsets.all(8.0),
@@ -296,9 +300,11 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildRecentHistory() {
     return Card(
-      elevation: 2,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[300]!),
+      ),
       child: Column(
         children: [
           ListTile(title: const Text('냉장고 문 닫힘 문제'), onTap: () {}),

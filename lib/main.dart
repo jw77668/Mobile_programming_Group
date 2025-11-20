@@ -154,11 +154,11 @@ class _MainScreenState extends State<MainScreen> {
     const HomePage(),
     const FindWasherPage(),
     const ChatbotPage(),
+    const NoteListPage(),
     SettingsPage(
       onBackPressed: () => setState(() => _currentIndex = 0),
       onLogout: widget.onLogout,
     ),
-    const NoteListPage(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -174,9 +174,13 @@ class _MainScreenState extends State<MainScreen> {
             label: '내 제품',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: '챗봇'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
           BottomNavigationBarItem(icon: Icon(Icons.note), label: '노트'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
         ],
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
       ),
     );
   }
