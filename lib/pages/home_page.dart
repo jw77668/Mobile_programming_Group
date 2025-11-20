@@ -5,6 +5,7 @@ import 'manual_viewer_page.dart';
 import '../models/washer_model.dart';
 import 'chatbot_page.dart';
 import 'notes_list_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -52,6 +53,7 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+
   //메모장
   void _navigateToNoteList() {
     print("Navigating to NoteListPage...");
@@ -80,7 +82,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             _buildSearchCard(),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '내 제품 목록'),
+            _buildSectionHeader(context, '내 제품'),
             const SizedBox(height: 12),
             _buildProductList(),
             const SizedBox(height: 24),
@@ -102,6 +104,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.white,
     );
   }
+
   //내 메모 섹션
   Widget _buildMemoSection() {
     return InkWell(
@@ -180,13 +183,20 @@ class _HomePageState extends State<HomePage> {
           title,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        if (title == '내 제품 목록')
-          CircleAvatar(
-            backgroundColor: Colors.blueAccent,
-            radius: 16,
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.white, size: 16),
-              onPressed: _navigateToFindWasher,
+        if (title == '내 제품')
+          TextButton(
+            onPressed: _navigateToFindWasher,
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            child: const Text(
+              '내 세탁기 설정하기',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ),
       ],
