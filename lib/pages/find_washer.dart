@@ -125,7 +125,8 @@ class _FindWasherPageState extends State<FindWasherPage> {
                             crossAxisCount: 2,
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
-                            childAspectRatio: 3 / 2,
+                            // ✅ 버튼 전체 비율: 가로:세로 = 2:3
+                            childAspectRatio: 2 / 3,
                           ),
                       itemCount: _filteredWashers.length,
                       itemBuilder: (context, index) {
@@ -189,15 +190,16 @@ class WasherButton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 이미지 영역 (1:1 비율)
+            // ✅ 상단 2/3: 이미지 영역
             Expanded(
-              flex: 3,
+              flex: 2,
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
                 child: Image.asset(
                   washer.imagePath,
+                  // ✅ 빈 부분 없이 꽉 차게
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
@@ -212,9 +214,9 @@ class WasherButton extends StatelessWidget {
                 ),
               ),
             ),
-            // 텍스트 영역
+            // ✅ 하단 1/3: 텍스트 영역 (이름 + 코드)
             Expanded(
-              flex: 2,
+              flex: 1,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
