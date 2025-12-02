@@ -5,6 +5,10 @@ import 'manual_viewer_page.dart';
 import '../models/washer_model.dart';
 import 'chatbot_page.dart';
 import 'notes_list_page.dart';
+import 'FAQ/filter_clean.dart';
+import 'FAQ/noise.dart';
+import 'FAQ/bad_smell.dart';
+import 'FAQ/power_off.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -289,21 +293,45 @@ class _HomePageState extends State<HomePage> {
       spacing: 8.0,
       runSpacing: 4.0,
       children: [
-        _buildFaqChip('필터 청소하기'),
-        _buildFaqChip('소음이 심해요'),
-        _buildFaqChip('냄새가 나요'),
-        _buildFaqChip('전원이 안 켜져요'),
+        _buildFaqChip('필터 청소하기', () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const FilterCleanFAQ()),
+          );
+        }),
+        _buildFaqChip('소음이 심해요', () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NoiseFAQ()),
+          );
+        }),
+        _buildFaqChip('악취가 나요', () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const BadSmellFAQ()),
+          );
+        }),
+        _buildFaqChip('전원이 안 켜져요', () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PowerOffFAQ()),
+          );
+        }),
       ],
     );
   }
 
-  Widget _buildFaqChip(String label) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: Colors.grey[200],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.grey[300]!),
+  Widget _buildFaqChip(String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Chip(
+        label: Text(label),
+        backgroundColor: Colors.grey[200],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.grey[300]!),
+        ),
       ),
     );
   }
