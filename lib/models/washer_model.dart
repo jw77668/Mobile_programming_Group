@@ -29,29 +29,29 @@ class WasherModel {
     };
   }
 
-  // 기본 세탁기 데이터
+  // 기본 세탁기 데이터의 washerCode 공백을 밑줄(_)로 수정합니다.
   static List<WasherModel> getDefaultWashers() {
     return [
       WasherModel(
-        washerCode: 'LG FX25VS',
+        washerCode: 'LG_FX25VS',
         washerName: 'LG 트롬 세탁기',
         manualPath: 'assets/data/LG_FX25VS.pdf',
         imagePath: 'assets/images/FX25VS.png',
       ),
       WasherModel(
-        washerCode: 'LG T1203S6',
+        washerCode: 'LG_T1203S6',
         washerName: 'LG 16kg 통돌이 세탁기',
         manualPath: 'assets/data/LG_T1203S6.pdf',
         imagePath: 'assets/images/T1203S6.png',
       ),
       WasherModel(
-        washerCode: 'LG T20BVD',
+        washerCode: 'LG_T20BVD',
         washerName: 'LG 21kg 통톨이 세탁기',
         manualPath: 'assets/data/LG_T20BVD.pdf',
         imagePath: 'assets/images/T20BVD.png',
       ),
       WasherModel(
-        washerCode: 'LG T15DUA',
+        washerCode: 'LG_T15DUA',
         washerName: 'LG 드럼 세탁기',
         manualPath: 'assets/data/LG_T15DUA.pdf',
         imagePath: 'assets/images/T15DUA.png',

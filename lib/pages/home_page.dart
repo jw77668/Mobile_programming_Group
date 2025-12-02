@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../services/washer_service.dart';
 import 'find_washer.dart';
 import 'manual_viewer_page.dart';
 import '../models/washer_model.dart';
 import 'chatbot_page.dart';
 import 'notes_list_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -13,46 +15,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  WasherModel? _myWasher;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMyWasher();
-  }
-
-  Future<void> _loadMyWasher() async {
-    final prefs = await SharedPreferences.getInstance();
-    final washerCode = prefs.getString('my_washer_code');
-
-    if (washerCode != null) {
-      final washers = WasherModel.getDefaultWashers();
-      setState(() {
-        _myWasher = washers.firstWhere(
-          (w) => w.washerCode == washerCode,
-          orElse: () => washers.first,
-        );
-      });
-    }
-  }
+  // SharedPreferences 대신 Provider를 사용하므로 로컬 상태 및 초기화 로직이 필요 없습니다.
 
   Future<void> _navigateToFindWasher() async {
-    // 버튼 클릭 시 로그 확인을 위한 print문 추가
+    // 페이지 이동만 하고 결과를 기다릴 필요가 없습니다.
+    // FindWasherPage에서 WasherService의 상태를 직접 업데이트합니다.
     print("Navigating to FindWasherPage...");
-    final result = await Navigator.push<WasherModel>(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const FindWasherPage()),
     );
-
-    if (result != null) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('my_washer_code', result.washerCode);
-      setState(() {
-        _myWasher = result;
-      });
-    }
   }
-  //메모장
+
   void _navigateToNoteList() {
     print("Navigating to NoteListPage...");
     Navigator.push(
@@ -63,6 +37,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Provider.of<WasherService>를 사용하여 현재 세탁기 정보를 가져옵니다.
+    // Consumer 또는 Provider.of(context)를 사용하면 서비스의 데이터가 변경될 때마다
+    // 이 위젯이 자동으로 다시 빌드됩니다.
+    final myWasher = Provider.of<WasherService>(context).currentWasher;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -78,11 +57,11 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSearchCard(),
+            _buildSearchCard(myWasher), // 현재 세탁기 정보를 전달
             const SizedBox(height: 24),
             _buildSectionHeader(context, '내 제품 목록'),
             const SizedBox(height: 12),
-            _buildProductList(),
+            _buildProductList(myWasher), // 현재 세탁기 정보를 전달
             const SizedBox(height: 24),
             _buildSectionHeader(context, '자주 묻는 질문'),
             const SizedBox(height: 12),
@@ -91,7 +70,6 @@ class _HomePageState extends State<HomePage> {
             _buildSectionHeader(context, '최근 해결 기록'),
             const SizedBox(height: 12),
             _buildRecentHistory(),
-            //내 메모 블록 추가
             const SizedBox(height: 24),
             _buildSectionHeader(context, '내 메모'),
             const SizedBox(height: 12),
@@ -102,10 +80,10 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.white,
     );
   }
-  //내 메모 섹션
+
   Widget _buildMemoSection() {
     return InkWell(
-      onTap: _navigateToNoteList, // 메모 페이지 이동 함수 호출
+      onTap: _navigateToNoteList,
       borderRadius: BorderRadius.circular(12),
       child: Card(
         elevation: 0,
@@ -118,11 +96,11 @@ class _HomePageState extends State<HomePage> {
           child: ListTile(
             leading: Icon(
               Icons.note_alt,
-              color: Colors.blueAccent, // 기존 디자인의 아이콘 색상 활용
+              color: Colors.blueAccent,
               size: 28,
             ),
             title: Text(
-              '메모 리스트', // 메모장 리스트로 이동함을 명확히 표시
+              '메모 리스트',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             trailing: Icon(
@@ -136,13 +114,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSearchCard() {
+  Widget _buildSearchCard(WasherModel? myWasher) {
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ChatbotPage()),
-        );
+        if (myWasher != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              // ChatbotPage는 이제 Provider를 통해 세탁기 정보를 얻으므로 파라미터가 필요 없습니다.
+              builder: (context) => const ChatbotPage(),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('먼저 내 제품을 등록해주세요.')),
+          );
+        }
       },
       child: Card(
         elevation: 0,
@@ -193,8 +180,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildProductList() {
-    if (_myWasher == null) {
+  Widget _buildProductList(WasherModel? myWasher) {
+    if (myWasher == null) {
       return SizedBox(
         height: 150,
         child: Center(
@@ -210,7 +197,7 @@ class _HomePageState extends State<HomePage> {
       height: 150,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        children: [_buildProductCard(_myWasher!)],
+        children: [_buildProductCard(myWasher)],
       ),
     );
   }
@@ -218,6 +205,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildProductCard(WasherModel washer) {
     return InkWell(
       onTap: () {
+        // ManualViewerPage도 Provider를 통해 세탁기 정보를 얻으므로 파라미터가 필요 없습니다.
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ManualViewerPage()),
