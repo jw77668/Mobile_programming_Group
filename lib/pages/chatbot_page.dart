@@ -80,9 +80,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
       });
 
       try {
+        // WasherModel에 새로 추가된 pdfId 필드를 사용합니다.
         final ragResponse = await _ragService.search(
           userMessage,
-          pdfId: _currentWasher!.washerCode,
+          pdfId: _currentWasher!.pdfId,
         );
         String botMessage = ragResponse.answer;
         setState(() {
