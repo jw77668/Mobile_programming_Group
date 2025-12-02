@@ -5,12 +5,14 @@ class FAQPage extends StatelessWidget {
   final String title; // 제목
   final String summary; // 개요
   final List<Widget> contents; // 본문 (해결방법, 주의사항, 이미지 포함 가능)
+  final String question; // 상단바에 표시할 질문
 
   const FAQPage({
     super.key,
     required this.title,
     required this.summary,
     required this.contents,
+    required this.question,
   });
 
   @override
@@ -26,6 +28,11 @@ class FAQPage extends StatelessWidget {
             );
           },
         ),
+        title: Text(
+          question,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
