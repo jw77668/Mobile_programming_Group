@@ -12,6 +12,7 @@ import 'FAQ/bad_smell.dart';
 import 'FAQ/power_off.dart';
 import '../widgets/recent_solutions_home.dart';
 import '../providers/chat_provider.dart';
+import '../widgets/washer_checklist.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -62,6 +63,8 @@ class HomePage extends StatelessWidget {
             _buildSectionHeader(context, '최근 해결 기록'),
             const SizedBox(height: 12),
             _buildRecentHistory(context),
+            const SizedBox(height: 24),
+            const WasherChecklist(),
             const SizedBox(height: 24),
             _buildSectionHeader(context, '내 메모'),
             const SizedBox(height: 12),
