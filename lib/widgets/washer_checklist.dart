@@ -15,11 +15,12 @@ class _WasherChecklistState extends State<WasherChecklist> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[300]!),
+        side: BorderSide(color: theme.dividerColor),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -75,6 +76,7 @@ class _WasherChecklistState extends State<WasherChecklist> {
   }
 
   Widget _buildChecklistItem(BuildContext context, ChecklistItem item) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () {
         Provider.of<ChecklistProvider>(context, listen: false).toggleItem(item.id);
@@ -92,7 +94,7 @@ class _WasherChecklistState extends State<WasherChecklist> {
                 IconButton(
                   icon: Icon(
                     item.reminder != null ? Icons.notifications_active : Icons.notifications_on_outlined,
-                    color: item.reminder != null ? Theme.of(context).primaryColor : Colors.grey,
+                    color: item.reminder != null ? theme.colorScheme.primary : theme.hintColor,
                   ),
                   onPressed: () {
                     final provider = Provider.of<ChecklistProvider>(context, listen: false);
@@ -131,7 +133,7 @@ class _WasherChecklistState extends State<WasherChecklist> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          color: theme.colorScheme.primary,
                         ),
                       );
                     },
