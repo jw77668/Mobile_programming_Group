@@ -170,8 +170,11 @@ class _NoteListPageState extends State<NoteListPage> {
             final box = await _notesBoxFuture;
             _navigateToNoteEditor(context, box, null);
           },
-          backgroundColor: theme.colorScheme.secondary,
-          child: const Icon(Icons.add)
+          backgroundColor: Colors.lightBlue[200],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: const Icon(Icons.note_add, color: Colors.white),
       ),
     );
   }

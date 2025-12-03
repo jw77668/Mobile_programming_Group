@@ -26,9 +26,15 @@ class _WasherChecklistState extends State<WasherChecklist> {
       child: Column(
         children: [
           ListTile(
-            title: Text(
-              '세탁기 청소 체크리스트',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            title: Row(
+              children: [
+                const Icon(Icons.checklist),
+                const SizedBox(width: 8),
+                Text(
+                  '세탁기 청소 체크리스트',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
             trailing: Icon(
               _isExpanded ? Icons.expand_less : Icons.expand_more,

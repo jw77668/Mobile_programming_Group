@@ -101,7 +101,8 @@ class _NoteEditPageState extends State<NoteEditPage> {
             leading: const Icon(Icons.delete),
             title: const Text('메모 삭제'),
             onTap: () {
-              Navigator.pop(context, 'delete'); // Return 'delete' to signal deletion
+              Navigator.pop(context); // Close the bottom sheet
+              Navigator.pop(context, 'delete'); // Return 'delete' to the previous page
             },
           ),
         ],
@@ -129,10 +130,6 @@ class _NoteEditPageState extends State<NoteEditPage> {
           onPressed: _saveAndReturn,
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.save, color: theme.iconTheme.color),
-            onPressed: _saveAndReturn,
-          ),
           IconButton(
             icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
             onPressed: () => _showMenu(context),
