@@ -3,12 +3,14 @@ class WasherModel {
   final String washerName;
   final String manualPath;
   final String imagePath;
+  final String pdfId;
 
   WasherModel({
     required this.washerCode,
     required this.washerName,
     required this.manualPath,
     required this.imagePath,
+    required this.pdfId,
   });
 
   factory WasherModel.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class WasherModel {
       washerName: json['washer_name'] as String,
       manualPath: json['manual_path'] as String,
       imagePath: json['image_path'] as String,
+      pdfId: json['pdf_id'] as String,
     );
   }
 
@@ -26,35 +29,99 @@ class WasherModel {
       'washer_name': washerName,
       'manual_path': manualPath,
       'image_path': imagePath,
+      'pdf_id': pdfId,
     };
   }
 
-  // 기본 세탁기 데이터
+  // 세탁기 데이터
   static List<WasherModel> getDefaultWashers() {
     return [
+      // SEW 1 설명서 공통
       WasherModel(
-        washerCode: 'LG FX25VS',
-        washerName: 'LG 트롬 세탁기',
-        manualPath: 'assets/data/LG_FX25VS.pdf',
-        imagePath: 'assets/images/FX25VS.png',
+        washerCode: 'Samsung_3G105A',
+        washerName: '삼성 Bespoke AI 세탁기 25kg',
+        manualPath: 'assets/data/Samsung_SEW_1.pdf',
+        imagePath: 'assets/images/3G105A.png',
+        pdfId: 'Samsung_SEW_1',
       ),
       WasherModel(
-        washerCode: 'LG T1203S6',
-        washerName: 'LG 16kg 통돌이 세탁기',
-        manualPath: 'assets/data/LG_T1203S6.pdf',
-        imagePath: 'assets/images/T1203S6.png',
+        washerCode: 'Samsung_3G106S',
+        washerName: '삼성 Bespoke AI 세탁기 24kg',
+        manualPath: 'assets/data/Samsung_SEW_1.pdf',
+        imagePath: 'assets/images/3G106S.png',
+        pdfId: 'Samsung_SEW_1',
       ),
       WasherModel(
-        washerCode: 'LG T20BVD',
-        washerName: 'LG 21kg 통톨이 세탁기',
-        manualPath: 'assets/data/LG_T20BVD.pdf',
-        imagePath: 'assets/images/T20BVD.png',
+        washerCode: 'Samsung_3G106M',
+        washerName: '삼성 Bespoke AI 세탁기 21kg',
+        manualPath: 'assets/data/Samsung_SEW_1.pdf',
+        imagePath: 'assets/images/3G106M.png',
+        pdfId: 'Samsung_SEW_1',
       ),
       WasherModel(
-        washerCode: 'LG T15DUA',
-        washerName: 'LG 드럼 세탁기',
-        manualPath: 'assets/data/LG_T15DUA.pdf',
-        imagePath: 'assets/images/T15DUA.png',
+        washerCode: 'Samsung_3G127HS',
+        washerName: '삼성 Bespoke AI 세탁기 25kg(올인원컨트롤)',
+        manualPath: 'assets/data/Samsung_SEW_1.pdf',
+        imagePath: 'assets/images/3G127HS.png',
+        pdfId: 'Samsung_SEW_1',
+      ),
+      WasherModel(
+        washerCode: 'Samsung_3G107H',
+        washerName: '삼성 Bespoke AI 세탁기 24kg(올인원컨트롤)',
+        manualPath: 'assets/data/Samsung_SEW_1.pdf',
+        imagePath: 'assets/images/3G107H.png',
+        pdfId: 'Samsung_SEW_1',
+      ),
+      WasherModel(
+        washerCode: 'Samsung_3G136J',
+        washerName: '삼성 Bespoke AI 세탁기 21kg(올인원컨트롤)',
+        manualPath: 'assets/data/Samsung_SEW_1.pdf',
+        imagePath: 'assets/images/3G136J.png',
+        pdfId: 'Samsung_SEW_1',
+      ),
+
+      // SEW 2 설명서 공통
+      WasherModel(
+        washerCode: 'Samsung_3G104F',
+        washerName: '삼성 AI 세탁기 25kg',
+        manualPath: 'assets/data/Samsung_SEW_2.pdf',
+        imagePath: 'assets/images/3G104F.png',
+        pdfId: 'Samsung_SEW_2',
+      ),
+      WasherModel(
+        washerCode: 'Samsung_3G104P',
+        washerName: '삼성 AI 세탁기 21kg',
+        manualPath: 'assets/data/Samsung_SEW_2.pdf',
+        imagePath: 'assets/images/3G104P.png',
+        pdfId: 'Samsung_SEW_2',
+      ),
+      WasherModel(
+        washerCode: 'Samsung_MF100',
+        washerName: '삼성 AI 통버블 세탁기 19kg',
+        manualPath: 'assets/data/Samsung_SEW_2.pdf',
+        imagePath: 'assets/images/MF100.png',
+        pdfId: 'Samsung_SEW_2',
+      ),
+      WasherModel(
+        washerCode: 'Samsung_MG100',
+        washerName: '삼성 AI 통버블 세탁기 16kg',
+        manualPath: 'assets/data/Samsung_SEW_2.pdf',
+        imagePath: 'assets/images/MG100.png',
+        pdfId: 'Samsung_SEW_2',
+      ),
+      WasherModel(
+        washerCode: 'Samsung_HS100',
+        washerName: '삼성 통버블 세탁기 19kg',
+        manualPath: 'assets/data/Samsung_SEW_2.pdf',
+        imagePath: 'assets/images/HS100.png',
+        pdfId: 'Samsung_SEW_2',
+      ),
+      WasherModel(
+        washerCode: 'Samsung_HS100J',
+        washerName: '삼성 통버블 세탁기 16kg',
+        manualPath: 'assets/data/Samsung_SEW_2.pdf',
+        imagePath: 'assets/images/HS100J.png',
+        pdfId: 'Samsung_SEW_2',
       ),
     ];
   }

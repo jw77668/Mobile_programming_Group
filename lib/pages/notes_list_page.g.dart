@@ -6,6 +6,7 @@ part of 'notes_list_page.dart';
 // TypeAdapterGenerator
 // **************************************************************************
 
+
 class NoteAdapter extends TypeAdapter<Note> {
   @override
   final int typeId = 0;

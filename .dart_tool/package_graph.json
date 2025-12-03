@@ -10,6 +10,7 @@
         "cupertino_icons",
         "flutter",
         "flutter_quill",
+        "flutter_quill_extensions",
         "hive",
         "hive_flutter",
         "http",
@@ -123,6 +124,21 @@
       ]
     },
     {
+      "name": "flutter_quill_extensions",
+      "version": "11.0.0",
+      "dependencies": [
+        "flutter",
+        "flutter_quill",
+        "image_picker",
+        "meta",
+        "path",
+        "photo_view",
+        "url_launcher",
+        "video_player",
+        "web"
+      ]
+    },
+    {
       "name": "image_picker",
       "version": "1.2.1",
       "dependencies": [
@@ -198,7 +214,7 @@
     },
     {
       "name": "syncfusion_flutter_pdfviewer",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "async",
         "device_info_plus",
@@ -686,6 +702,32 @@
       ]
     },
     {
+      "name": "web",
+      "version": "1.1.1",
+      "dependencies": []
+    },
+    {
+      "name": "url_launcher",
+      "version": "6.3.2",
+      "dependencies": [
+        "flutter",
+        "url_launcher_android",
+        "url_launcher_ios",
+        "url_launcher_linux",
+        "url_launcher_macos",
+        "url_launcher_platform_interface",
+        "url_launcher_web",
+        "url_launcher_windows"
+      ]
+    },
+    {
+      "name": "photo_view",
+      "version": "0.15.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
       "name": "image_picker_windows",
       "version": "0.2.2",
       "dependencies": [
@@ -746,7 +788,7 @@
     },
     {
       "name": "image_picker_android",
-      "version": "0.8.13+8",
+      "version": "0.8.13+10",
       "dependencies": [
         "flutter",
         "flutter_plugin_android_lifecycle",
@@ -778,20 +820,6 @@
         "flutter_web_plugins",
         "meta",
         "web"
-      ]
-    },
-    {
-      "name": "url_launcher",
-      "version": "6.3.2",
-      "dependencies": [
-        "flutter",
-        "url_launcher_android",
-        "url_launcher_ios",
-        "url_launcher_linux",
-        "url_launcher_macos",
-        "url_launcher_platform_interface",
-        "url_launcher_web",
-        "url_launcher_windows"
       ]
     },
     {
@@ -901,7 +929,7 @@
     },
     {
       "name": "path_provider_foundation",
-      "version": "2.4.4",
+      "version": "2.5.1",
       "dependencies": [
         "flutter",
         "path_provider_platform_interface"
@@ -909,7 +937,7 @@
     },
     {
       "name": "path_provider_android",
-      "version": "2.2.21",
+      "version": "2.2.22",
       "dependencies": [
         "flutter",
         "path_provider_platform_interface"
@@ -917,15 +945,16 @@
     },
     {
       "name": "syncfusion_flutter_signaturepad",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "flutter",
-        "syncfusion_flutter_core"
+        "syncfusion_flutter_core",
+        "web"
       ]
     },
     {
       "name": "syncfusion_flutter_pdf",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "convert",
         "crypto",
@@ -938,7 +967,7 @@
     },
     {
       "name": "syncfusion_flutter_core",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "flutter",
         "vector_math"
@@ -946,7 +975,7 @@
     },
     {
       "name": "syncfusion_pdfviewer_linux",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "flutter",
         "plugin_platform_interface"
@@ -954,14 +983,14 @@
     },
     {
       "name": "syncfusion_pdfviewer_windows",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "flutter"
       ]
     },
     {
       "name": "syncfusion_pdfviewer_macos",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "flutter",
         "syncfusion_pdfviewer_platform_interface"
@@ -969,7 +998,7 @@
     },
     {
       "name": "syncfusion_pdfviewer_web",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "flutter",
         "flutter_web_plugins",
@@ -979,7 +1008,7 @@
     },
     {
       "name": "syncfusion_pdfviewer_platform_interface",
-      "version": "31.2.12",
+      "version": "31.2.16",
       "dependencies": [
         "flutter",
         "plugin_platform_interface"
@@ -987,7 +1016,7 @@
     },
     {
       "name": "device_info_plus",
-      "version": "12.2.0",
+      "version": "12.3.0",
       "dependencies": [
         "device_info_plus_platform_interface",
         "ffi",
@@ -999,11 +1028,6 @@
         "win32",
         "win32_registry"
       ]
-    },
-    {
-      "name": "web",
-      "version": "1.1.1",
-      "dependencies": []
     },
     {
       "name": "shared_preferences_windows",
@@ -1057,7 +1081,7 @@
     },
     {
       "name": "shared_preferences_android",
-      "version": "2.4.16",
+      "version": "2.4.18",
       "dependencies": [
         "flutter",
         "shared_preferences_platform_interface"
@@ -1149,7 +1173,7 @@
     },
     {
       "name": "built_value",
-      "version": "8.12.0",
+      "version": "8.12.1",
       "dependencies": [
         "built_collection",
         "collection",
@@ -1191,6 +1215,64 @@
       ]
     },
     {
+      "name": "url_launcher_windows",
+      "version": "3.1.5",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
+      ]
+    },
+    {
+      "name": "url_launcher_web",
+      "version": "2.4.1",
+      "dependencies": [
+        "flutter",
+        "flutter_web_plugins",
+        "url_launcher_platform_interface",
+        "web"
+      ]
+    },
+    {
+      "name": "url_launcher_platform_interface",
+      "version": "2.3.2",
+      "dependencies": [
+        "flutter",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "url_launcher_macos",
+      "version": "3.2.5",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
+      ]
+    },
+    {
+      "name": "url_launcher_linux",
+      "version": "3.2.2",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
+      ]
+    },
+    {
+      "name": "url_launcher_ios",
+      "version": "6.3.6",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
+      ]
+    },
+    {
+      "name": "url_launcher_android",
+      "version": "6.3.28",
+      "dependencies": [
+        "flutter",
+        "url_launcher_platform_interface"
+      ]
+    },
+    {
       "name": "file_selector_windows",
       "version": "0.9.3+5",
       "dependencies": [
@@ -1226,7 +1308,7 @@
     },
     {
       "name": "file_selector_macos",
-      "version": "0.9.4+6",
+      "version": "0.9.5",
       "dependencies": [
         "cross_file",
         "file_selector_platform_interface",
@@ -1235,7 +1317,7 @@
     },
     {
       "name": "file_selector_linux",
-      "version": "0.9.3+3",
+      "version": "0.9.4",
       "dependencies": [
         "cross_file",
         "file_selector_platform_interface",
@@ -1251,7 +1333,7 @@
     },
     {
       "name": "flutter_plugin_android_lifecycle",
-      "version": "2.0.32",
+      "version": "2.0.33",
       "dependencies": [
         "flutter"
       ]
@@ -1344,64 +1426,6 @@
       ]
     },
     {
-      "name": "url_launcher_windows",
-      "version": "3.1.5",
-      "dependencies": [
-        "flutter",
-        "url_launcher_platform_interface"
-      ]
-    },
-    {
-      "name": "url_launcher_web",
-      "version": "2.4.1",
-      "dependencies": [
-        "flutter",
-        "flutter_web_plugins",
-        "url_launcher_platform_interface",
-        "web"
-      ]
-    },
-    {
-      "name": "url_launcher_platform_interface",
-      "version": "2.3.2",
-      "dependencies": [
-        "flutter",
-        "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "url_launcher_macos",
-      "version": "3.2.5",
-      "dependencies": [
-        "flutter",
-        "url_launcher_platform_interface"
-      ]
-    },
-    {
-      "name": "url_launcher_linux",
-      "version": "3.2.2",
-      "dependencies": [
-        "flutter",
-        "url_launcher_platform_interface"
-      ]
-    },
-    {
-      "name": "url_launcher_ios",
-      "version": "6.3.6",
-      "dependencies": [
-        "flutter",
-        "url_launcher_platform_interface"
-      ]
-    },
-    {
-      "name": "url_launcher_android",
-      "version": "6.3.25",
-      "dependencies": [
-        "flutter",
-        "url_launcher_platform_interface"
-      ]
-    },
-    {
       "name": "csslib",
       "version": "1.0.2",
       "dependencies": [
@@ -1476,6 +1500,52 @@
       "dependencies": [
         "collection",
         "meta"
+      ]
+    },
+    {
+      "name": "video_player",
+      "version": "2.10.1",
+      "dependencies": [
+        "flutter",
+        "html",
+        "video_player_android",
+        "video_player_avfoundation",
+        "video_player_platform_interface",
+        "video_player_web"
+      ]
+    },
+    {
+      "name": "video_player_platform_interface",
+      "version": "6.6.0",
+      "dependencies": [
+        "flutter",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "video_player_web",
+      "version": "2.4.0",
+      "dependencies": [
+        "flutter",
+        "flutter_web_plugins",
+        "video_player_platform_interface",
+        "web"
+      ]
+    },
+    {
+      "name": "video_player_avfoundation",
+      "version": "2.8.8",
+      "dependencies": [
+        "flutter",
+        "video_player_platform_interface"
+      ]
+    },
+    {
+      "name": "video_player_android",
+      "version": "2.8.22",
+      "dependencies": [
+        "flutter",
+        "video_player_platform_interface"
       ]
     }
   ],

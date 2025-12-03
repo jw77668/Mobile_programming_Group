@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'note_models.dart';
+import 'package:hive/hive.dart';
+part 'note_editor_page.g.dart';
 
 class NoteEditPage extends StatefulWidget {
   final Note? note;

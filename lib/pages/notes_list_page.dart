@@ -1,8 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../providers/theme_provider.dart';
 import 'note_editor_page.dart';
 import 'note_models.dart';
+
+part 'notes_list_page.g.dart';
+
 
 class NoteListPage extends StatefulWidget {
   const NoteListPage({super.key});
@@ -20,13 +26,20 @@ class _NoteListPageState extends State<NoteListPage> {
   @override
   void initState() {
     super.initState();
-    _notesBoxFuture = Hive.openBox<Note>('notesBox_v3');
+    _notesBoxFuture = _openUserNotesBox();
 
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
       });
     });
+  }
+
+  Future<Box<Note>> _openUserNotesBox() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userEmail = prefs.getString('user_email');
+    final boxName = 'notesBox_v3_${userEmail ?? 'default_user'}';
+    return Hive.openBox<Note>(boxName);
   }
 
   @override
@@ -73,15 +86,16 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('노트 목록', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
+        title: Text('노트 목록', style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         actions: [
           PopupMenuButton<SortOption>(
-            icon: const Icon(Icons.sort, color: Colors.black),
+            icon: Icon(Icons.sort, color: theme.iconTheme.color),
             onSelected: (SortOption result) {
               setState(() {
                 _sortOption = result;
@@ -153,24 +167,26 @@ class _NoteListPageState extends State<NoteListPage> {
             final box = await _notesBoxFuture;
             _navigateToNoteEditor(context, box, null);
           },
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: theme.colorScheme.secondary,
           child: const Icon(Icons.add)
       ),
     );
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: Colors.black),
+        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: '검색',
           hintStyle: TextStyle(color: Colors.grey[600]),
           prefixIcon: const Icon(Icons.search, color: Colors.grey),
           filled: true,
-          fillColor: Colors.grey[200],
+          fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -188,19 +204,21 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   Widget _buildNoteItem(BuildContext context, Note note, Box<Note> box) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Card(
-      color: Colors.white,
+      color: theme.cardColor,
       elevation: 0.5,
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.grey.shade300, width: 1),
+        side: BorderSide(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300, width: 1),
       ),
       child: ListTile(
         onTap: () => _navigateToNoteEditor(context, box, note),
         title: Text(
           note.title,
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4.0),
