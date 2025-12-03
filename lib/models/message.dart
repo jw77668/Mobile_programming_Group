@@ -5,12 +5,14 @@ class Message {
   final String role;
   final String content;
   final DateTime createdAt;
+  final List<int> pages;
 
   Message({
     required this.id,
     required this.role,
     required this.content,
     required this.createdAt,
+    this.pages = const [],
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -19,6 +21,7 @@ class Message {
       role: json['role'] as String,
       content: json['content'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      pages: (json['pages'] as List<dynamic>? ?? []).map((e) => e as int).toList(),
     );
   }
 
@@ -27,5 +30,6 @@ class Message {
     'role': role,
     'content': content,
     'createdAt': createdAt.toIso8601String(),
+    'pages': pages,
   };
 }

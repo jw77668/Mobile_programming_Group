@@ -284,15 +284,8 @@ class HomePage extends StatelessWidget {
       onSolutionTap: (solution) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ChatbotPage()),
+          MaterialPageRoute(builder: (context) => ChatbotPage(solution: solution)),
         );
-        Future.delayed(const Duration(milliseconds: 300), () {
-          final chatProvider = Provider.of<ChatProvider>(
-            context,
-            listen: false,
-          );
-          chatProvider.onSolutionSelected(solution);
-        });
       },
     );
   }
