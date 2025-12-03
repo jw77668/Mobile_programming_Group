@@ -10,6 +10,8 @@ import 'FAQ/filter_clean.dart';
 import 'FAQ/noise.dart';
 import 'FAQ/bad_smell.dart';
 import 'FAQ/power_off.dart';
+import '../widgets/recent_solutions_home.dart';
+import '../providers/chat_provider.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -34,7 +36,10 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Smart Guide', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Smart Guide',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -56,7 +61,7 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 24),
             _buildSectionHeader(context, '최근 해결 기록'),
             const SizedBox(height: 12),
-            _buildRecentHistory(),
+            _buildRecentHistory(context),
             const SizedBox(height: 24),
             _buildSectionHeader(context, '내 메모'),
             const SizedBox(height: 12),
@@ -82,8 +87,15 @@ class HomePage extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 4.0),
           child: ListTile(
             leading: Icon(Icons.note_alt, color: Colors.blueAccent, size: 28),
-            title: Text('메모 리스트', style: TextStyle(fontWeight: FontWeight.w500)),
-            trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 18),
+            title: Text(
+              '메모 리스트',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.grey,
+              size: 18,
+            ),
           ),
         ),
       ),
@@ -94,11 +106,14 @@ class HomePage extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (myWasher != null) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatbotPage()));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('먼저 내 제품을 등록해주세요.')),
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ChatbotPage()),
           );
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('먼저 내 제품을 등록해주세요.')));
         }
       },
       child: Card(
@@ -134,7 +149,10 @@ class HomePage extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         if (title == '내 제품')
           TextButton(
             onPressed: () => _navigateToFindWasher(context),
@@ -142,9 +160,14 @@ class HomePage extends StatelessWidget {
               backgroundColor: Colors.blueAccent,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
             ),
-            child: const Text('내 세탁기 설정하기', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            child: const Text(
+              '내 세탁기 설정하기',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
       ],
     );
@@ -155,23 +178,35 @@ class HomePage extends StatelessWidget {
       return SizedBox(
         height: 150,
         child: Center(
-          child: Text('아직 내 세탁기가 설정되지 않았습니다', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+          child: Text(
+            '아직 내 세탁기가 설정되지 않았습니다',
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          ),
         ),
       );
     }
     return SizedBox(
       height: 150,
-      child: ListView(scrollDirection: Axis.horizontal, children: [_buildProductCard(context, myWasher)]),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [_buildProductCard(context, myWasher)],
+      ),
     );
   }
 
   Widget _buildProductCard(BuildContext context, WasherModel washer) {
     return InkWell(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ManualViewerPage())),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ManualViewerPage()),
+      ),
       borderRadius: BorderRadius.circular(12),
       child: Card(
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey[300]!)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey[300]!),
+        ),
         child: Container(
           width: 120,
           padding: const EdgeInsets.all(8.0),
@@ -180,16 +215,35 @@ class HomePage extends StatelessWidget {
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(washer.imagePath, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
-                      child: const Center(child: Icon(Icons.local_laundry_service, size: 40, color: Colors.grey)),
-                    );
-                  }),
+                  child: Image.asset(
+                    washer.imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.local_laundry_service,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
-              Text(washer.washerName, style: const TextStyle(fontWeight: FontWeight.w500), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+              Text(
+                washer.washerName,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
@@ -213,23 +267,33 @@ class HomePage extends StatelessWidget {
   Widget _buildFaqChip(BuildContext context, String label, Widget page) {
     return ActionChip(
       label: Text(label),
-      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => page)),
+      onPressed: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => page),
+      ),
       backgroundColor: Colors.grey[200],
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.grey[300]!)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.grey[300]!),
+      ),
     );
   }
 
-  Widget _buildRecentHistory() {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey[300]!)),
-      child: Column(
-        children: [
-          ListTile(title: const Text('냉장고 문 닫힘 문제'), onTap: () {}),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          ListTile(title: const Text('세탁기 탈수 안됨'), onTap: () {}),
-        ],
-      ),
+  Widget _buildRecentHistory(BuildContext context) {
+    return RecentSolutionsHome(
+      onSolutionTap: (solution) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatbotPage()),
+        );
+        Future.delayed(const Duration(milliseconds: 300), () {
+          final chatProvider = Provider.of<ChatProvider>(
+            context,
+            listen: false,
+          );
+          chatProvider.onSolutionSelected(solution);
+        });
+      },
     );
   }
 }

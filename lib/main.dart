@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +15,8 @@ import 'providers/theme_provider.dart';
 import 'pages/notes_list_page.dart' hide NoteAdapter, NoteTypeAdapter;
 import 'pages/note_models.dart';
 import 'services/washer_service.dart'; // WasherService import
+import 'providers/chat_provider.dart';
+import 'models/chat_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,11 +44,18 @@ void main() async {
   final washerService = WasherService();
   await washerService.loadInitialWasher();
 
+  // ChatProvider 초기화 및 데이터 로드
+  final chatProvider = ChatProvider(
+    ChatData(messages: [], recentSolutions: []),
+  );
+  await chatProvider.loadChatData();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: washerService),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider.value(value: chatProvider),
       ],
       child: const SmartGuideApp(),
     ),
@@ -80,10 +88,7 @@ class SmartGuideApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
             FlutterQuillLocalizations.delegate,
           ],
-          supportedLocales: const [
-            Locale('ko'),
-            Locale('en'),
-          ],
+          supportedLocales: const [Locale('ko'), Locale('en')],
           home: const AuthChecker(),
         );
       },
@@ -196,7 +201,10 @@ class _MainScreenState extends State<MainScreen> {
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.devices_other), label: '내 제품'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.devices_other),
+            label: '내 제품',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: '챗봇'),
           BottomNavigationBarItem(icon: Icon(Icons.note), label: '노트'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
