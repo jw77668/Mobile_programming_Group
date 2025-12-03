@@ -50,17 +50,16 @@ class _NoteListPageState extends State<NoteListPage> {
     final filteredNotes = _searchQuery.isEmpty
         ? box.values.toList()
         : box.values
-        .where((note) =>
-        note.title.toLowerCase().contains(_searchQuery.toLowerCase()))
-        .toList();
+            .where((note) {
+              final query = _searchQuery.toLowerCase();
+              return note.title.toLowerCase().contains(query) || 
+                     note.plainText.toLowerCase().contains(query);
+            })
+            .toList();
 
     filteredNotes.sort((a, b) {
-      // null safety for isStarred
-      final aStarred = a.isStarred ?? false;
-      final bStarred = b.isStarred ?? false;
-
-      if (aStarred && !bStarred) return -1;
-      if (!aStarred && bStarred) return 1;
+      if (a.isStarred && !b.isStarred) return -1;
+      if (!a.isStarred && b.isStarred) return 1;
 
       switch (_sortOption) {
         case SortOption.modifiedDateDesc:
@@ -179,7 +178,6 @@ class _NoteListPageState extends State<NoteListPage> {
 
   Widget _buildSearchBar() {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: TextField(
@@ -187,10 +185,10 @@ class _NoteListPageState extends State<NoteListPage> {
         style: TextStyle(color: theme.textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: '검색',
-          hintStyle: TextStyle(color: Colors.grey[600]),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          hintStyle: TextStyle(color: theme.hintColor),
+          prefixIcon: Icon(Icons.search, color: theme.hintColor),
           filled: true,
-          fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+          fillColor: theme.colorScheme.surfaceVariant,
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -198,9 +196,9 @@ class _NoteListPageState extends State<NoteListPage> {
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-            icon: const Icon(Icons.clear, color: Colors.grey),
-            onPressed: () => _searchController.clear(),
-          )
+                  icon: Icon(Icons.clear, color: theme.hintColor),
+                  onPressed: () => _searchController.clear(),
+                )
               : null,
         ),
       ),
@@ -209,16 +207,13 @@ class _NoteListPageState extends State<NoteListPage> {
 
   Widget _buildNoteItem(BuildContext context, Note note, Box<Note> box) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final isStarred = note.isStarred ?? false;
-
     return Card(
       color: theme.cardColor,
       elevation: 0.5,
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300, width: 1),
+        side: BorderSide(color: theme.dividerColor, width: 1),
       ),
       child: ListTile(
         onTap: () => _navigateToNoteEditor(context, box, note),
@@ -240,7 +235,7 @@ class _NoteListPageState extends State<NoteListPage> {
               const SizedBox(height: 4),
               Text(
                 note.fullDateString,
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                style: TextStyle(color: theme.hintColor, fontSize: 12),
               ),
             ],
           ),
@@ -250,20 +245,20 @@ class _NoteListPageState extends State<NoteListPage> {
           children: [
             IconButton(
               icon: Icon(
-                isStarred ? Icons.star : Icons.star_border,
-                color: isStarred ? Colors.amber[600] : Colors.grey,
+                note.isStarred ? Icons.star : Icons.star_border,
+                color: note.isStarred ? Colors.amber[600] : theme.hintColor,
               ),
               onPressed: () {
-                note.isStarred = !isStarred;
+                note.isStarred = !note.isStarred;
                 box.put(note.id, note);
               },
             ),
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blueGrey, size: 20),
+              icon: Icon(Icons.edit, color: theme.iconTheme.color, size: 20),
               onPressed: () => _navigateToNoteEditor(context, box, note),
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
+              icon: Icon(Icons.delete, color: theme.colorScheme.error, size: 20),
               onPressed: () => box.delete(note.id),
             ),
           ],

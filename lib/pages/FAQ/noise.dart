@@ -7,6 +7,7 @@ class NoiseFAQ extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return FAQPage(
       title: "세탁기 소음이 심할 때 해결 방법",
       question: "소음이 심해요",
@@ -15,18 +16,18 @@ class NoiseFAQ extends StatelessWidget {
           "설치 상태와 세탁물 상태를 점검하면 대부분의 소음 문제를 완화할 수 있습니다.",
       contents: [
         // 해결 방법 제목
-        const FAQSectionHeader(
+        FAQSectionHeader(
           title: "해결 방법",
           icon: Icons.build_circle,
-          iconColor: Colors.blueAccent,
+          iconColor: theme.colorScheme.secondary,
         ),
         const SizedBox(height: 8),
 
         // 해결 방법 내용
-        const Text.rich(
+        Text.rich(
           TextSpan(
-            style: TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
-            children: [
+            style: TextStyle(fontSize: 15, height: 1.5, color: theme.colorScheme.onSurface),
+            children: const [
               TextSpan(
                 text: "1. 세탁기 수평을 먼저 확인하세요.\n",
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -82,19 +83,19 @@ class NoiseFAQ extends StatelessWidget {
         // const SizedBox(height: 24),
 
         // 주의 사항 제목
-        const FAQSectionHeader(
+        FAQSectionHeader(
           title: "주의 사항",
           icon: Icons.warning_amber_rounded,
-          iconColor: Colors.orangeAccent,
+          iconColor: theme.colorScheme.error,
         ),
         const SizedBox(height: 8),
 
         // 주의 사항 내용
-        const Text(
+        Text(
           "- 금속이 갈리는 소리, 타는 냄새, 연기 등 이상 증상이 함께 나타나면 즉시 사용을 중지하세요.\n"
           "- 세탁기가 심하게 흔들리면서 이동하려고 할 경우, 바로 전원을 끄고 세탁물을 일부 꺼낸 뒤 다시 시도하세요.\n"
           "- 위 방법으로도 소음이 계속되면 모터, 베어링 등 부품 문제일 수 있으니 서비스센터 점검을 권장합니다.",
-          style: TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
+          style: TextStyle(fontSize: 15, height: 1.5, color: theme.colorScheme.onSurface),
         ),
 
         const SizedBox(height: 30),

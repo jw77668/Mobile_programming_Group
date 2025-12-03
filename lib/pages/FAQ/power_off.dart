@@ -7,6 +7,7 @@ class PowerOffFAQ extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return FAQPage(
       title: "세탁기 전원이 켜지지 않을 때 해결 방법",
       question: "전원이 안 켜져요",
@@ -15,18 +16,18 @@ class PowerOffFAQ extends StatelessWidget {
           "아래 순서대로 점검해 보세요.",
       contents: [
         // 해결 방법 제목
-        const FAQSectionHeader(
+        FAQSectionHeader(
           title: "해결 방법",
           icon: Icons.build_circle,
-          iconColor: Colors.blueAccent,
+          iconColor: theme.colorScheme.secondary,
         ),
         const SizedBox(height: 8),
 
         // 해결 방법 내용
-        const Text.rich(
+        Text.rich(
           TextSpan(
-            style: TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
-            children: [
+            style: TextStyle(fontSize: 15, height: 1.5, color: theme.colorScheme.onSurface),
+            children: const [
               TextSpan(
                 text: "1. 사용 중인 콘센트에 전기가 정상적으로 들어오는지 확인하세요.\n",
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -90,19 +91,19 @@ class PowerOffFAQ extends StatelessWidget {
         // const SizedBox(height: 24),
 
         // 주의 사항 제목
-        const FAQSectionHeader(
+        FAQSectionHeader(
           title: "주의 사항",
           icon: Icons.warning_amber_rounded,
-          iconColor: Colors.orangeAccent,
+          iconColor: theme.colorScheme.error,
         ),
         const SizedBox(height: 8),
 
         // 주의 사항 내용
-        const Text(
+        Text(
           "- 전원 플러그나 콘센트에서 타는 냄새, 탄 자국, 스파크(불꽃) 등이 보이면 즉시 사용을 중단하고 전문 기사에게 점검을 받으세요.\n"
           "- 전원 코드가 심하게 꺾이거나 피복이 벗겨져 있으면 감전 및 화재 위험이 있으므로 사용하지 마세요.\n"
           "- 기본 점검 후에도 전원이 전혀 들어오지 않는다면 내부 회로(메인보드, 전원부) 이상일 수 있으니 서비스센터에 문의하세요.",
-          style: TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
+          style: TextStyle(fontSize: 15, height: 1.5, color: theme.colorScheme.onSurface),
         ),
 
         const SizedBox(height: 30),
