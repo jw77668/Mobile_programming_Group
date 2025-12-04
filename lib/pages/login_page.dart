@@ -90,8 +90,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -99,29 +100,29 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 60),
-              const Center(
+              Center(
                 child: Text(
                   'Smart Guide',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: theme.colorScheme.onBackground,
                   ),
                 ),
               ),
               const SizedBox(height: 60),
-              const Text(
+              Text(
                 '회원가입',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: theme.colorScheme.onBackground,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 '아래 정보를 입력하여 가입해주세요',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: theme.hintColor),
               ),
               const SizedBox(height: 24),
               TextField(
@@ -129,9 +130,9 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: InputDecoration(
                   labelText: '이름',
                   hintText: '홍길동',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: theme.colorScheme.surfaceVariant,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -148,9 +149,9 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: InputDecoration(
                   labelText: '이메일',
                   hintText: 'email@domain.com',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: theme.colorScheme.surfaceVariant,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -169,9 +170,9 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: InputDecoration(
                   labelText: '비밀번호',
                   hintText: '6자 이상 입력',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: theme.colorScheme.surfaceVariant,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -185,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
                       _obscurePassword
                           ? Icons.visibility_off
                           : Icons.visibility,
-                      color: Colors.grey,
+                      color: theme.hintColor,
                     ),
                     onPressed: () {
                       setState(() {
@@ -202,9 +203,9 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: InputDecoration(
                   labelText: '비밀번호 확인',
                   hintText: '비밀번호를 다시 입력하세요',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: theme.colorScheme.surfaceVariant,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -218,7 +219,7 @@ class _LoginPageState extends State<LoginPage> {
                       _obscurePasswordConfirm
                           ? Icons.visibility_off
                           : Icons.visibility,
-                      color: Colors.grey,
+                      color: theme.hintColor,
                     ),
                     onPressed: () {
                       setState(() {
@@ -242,16 +243,16 @@ class _LoginPageState extends State<LoginPage> {
                   Expanded(
                     child: RichText(
                       text: TextSpan(
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: Colors.black87,
+                          color: theme.colorScheme.onSurface,
                         ),
                         children: [
                           const TextSpan(text: '서비스 이용약관 및 '),
                           TextSpan(
                             text: '개인정보 처리방침',
                             style: TextStyle(
-                              color: Colors.blue[700],
+                              color: theme.colorScheme.primary,
                               decoration: TextDecoration.underline,
                             ),
                           ),
@@ -269,7 +270,8 @@ class _LoginPageState extends State<LoginPage> {
                 child: ElevatedButton(
                   onPressed: _handleLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -278,17 +280,16 @@ class _LoginPageState extends State<LoginPage> {
                     '가입하기',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Center(
+              Center(
                 child: Text(
                   '또는',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: theme.hintColor),
                 ),
               ),
               const SizedBox(height: 16),
@@ -300,20 +301,20 @@ class _LoginPageState extends State<LoginPage> {
                     // Google 로그인 (나중에 구현)
                   },
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.grey[300]!),
+                    side: BorderSide(color: theme.dividerColor),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.surface,
                   ),
                   icon: Image.network(
                     'https://www.google.com/favicon.ico',
                     width: 20,
                     height: 20,
                   ),
-                  label: const Text(
+                  label: Text(
                     'Google 계정으로 계속하기',
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                    style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
                   ),
                 ),
               ),
@@ -324,9 +325,9 @@ class _LoginPageState extends State<LoginPage> {
                   child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey,
+                        color: theme.hintColor,
                         height: 1.5,
                       ),
                       children: [
@@ -334,7 +335,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextSpan(
                           text: '서비스 이용 약관',
                           style: TextStyle(
-                            color: Colors.blue[700],
+                            color: theme.colorScheme.primary,
                             decoration: TextDecoration.underline,
                           ),
                         ),
@@ -342,7 +343,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextSpan(
                           text: '개인정보 처리방침',
                           style: TextStyle(
-                            color: Colors.blue[700],
+                            color: theme.colorScheme.primary,
                             decoration: TextDecoration.underline,
                           ),
                         ),

@@ -14,16 +14,17 @@ class FAQSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Icon(icon, color: iconColor, size: 24),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: theme.colorScheme.onBackground,
           ),
         ),
       ],

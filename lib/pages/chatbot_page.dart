@@ -164,18 +164,20 @@ class _ChatbotPageState extends State<ChatbotPage> {
   Widget build(BuildContext context) {
     final washerName = _currentWasher?.washerName ?? '챗봇';
     final chatProvider = context.watch<ChatProvider>();
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(title: Text('$washerName 챗봇')),
       body: Column(
         children: [
-          Expanded(child: _buildBody(chatProvider)),
-          _buildInputArea(),
+          Expanded(child: _buildBody(chatProvider, theme)),
+          _buildInputArea(theme),
         ],
       ),
     );
   }
 
-  Widget _buildBody(ChatProvider chatProvider) {
+  Widget _buildBody(ChatProvider chatProvider, ThemeData theme) {
     switch (_chatState) {
       case ChatState.initializing:
         return const Center(
@@ -188,7 +190,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
             child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 50),
+                  Icon(Icons.error_outline, color: theme.colorScheme.error, size: 50),
                   const SizedBox(height: 16),
                   Text(_errorMessage ?? '알 수 없는 오류가 발생했습니다.',
                       textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
@@ -199,13 +201,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       label: const Text('재시도')),
                 ])));
       case ChatState.no_washer:
-        return const Center(
+        return Center(
             child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32.0),
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: Text(
                   '챗봇을 사용하려면 먼저 제품을 등록해주세요.\n[내 제품] 탭에서 제품을 선택할 수 있습니다.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  style: TextStyle(fontSize: 16, color: theme.hintColor),
                 )));
       case ChatState.ready:
         return ListView.builder(
@@ -240,10 +242,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       children: message.pages
                           .map((page) => ActionChip(
                                 avatar: Icon(Icons.find_in_page_outlined,
-                                    size: 18, color: Colors.blue.shade700),
+                                    size: 18, color: theme.colorScheme.primary),
                                 label: Text('p. $page'),
                                 labelStyle: TextStyle(
-                                    color: Colors.blue.shade700,
+                                    color: theme.colorScheme.primary,
                                     fontWeight: FontWeight.w600),
                                 onPressed: () => _navigateToPdfPage(page),
                               ))
@@ -277,7 +279,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
     }
   }
 
-  Widget _buildInputArea() {
+  Widget _buildInputArea(ThemeData theme) {
     bool canSend = _chatState == ChatState.ready && !_isBotReplying;
     return Padding(
       padding: const EdgeInsets.all(8.0),

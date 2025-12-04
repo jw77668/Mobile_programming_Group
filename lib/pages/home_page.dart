@@ -12,6 +12,7 @@ import 'FAQ/bad_smell.dart';
 import 'FAQ/power_off.dart';
 import '../widgets/recent_solutions_home.dart';
 import '../providers/chat_provider.dart';
+import '../widgets/washer_checklist.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -33,6 +34,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final myWasher = Provider.of<WasherService>(context).currentWasher;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -41,7 +43,7 @@ class HomePage extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -63,17 +65,20 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 12),
             _buildRecentHistory(context),
             const SizedBox(height: 24),
+            const WasherChecklist(),
+            const SizedBox(height: 24),
             _buildSectionHeader(context, '내 메모'),
             const SizedBox(height: 12),
             _buildMemoSection(context),
           ],
         ),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
     );
   }
 
   Widget _buildMemoSection(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () => _navigateToNoteList(context),
       borderRadius: BorderRadius.circular(12),
@@ -81,19 +86,19 @@ class HomePage extends StatelessWidget {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.grey[300]!),
+          side: BorderSide(color: theme.dividerColor),
         ),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 4.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: ListTile(
-            leading: Icon(Icons.note_alt, color: Colors.blueAccent, size: 28),
-            title: Text(
+            leading: Icon(Icons.note_alt, color: theme.colorScheme.primary, size: 28),
+            title: const Text(
               '메모 리스트',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             trailing: Icon(
               Icons.arrow_forward_ios,
-              color: Colors.grey,
+              color: theme.hintColor,
               size: 18,
             ),
           ),
@@ -103,6 +108,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildSearchCard(BuildContext context, WasherModel? myWasher) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () {
         if (myWasher != null) {
@@ -118,24 +124,24 @@ class HomePage extends StatelessWidget {
       },
       child: Card(
         elevation: 0,
-        color: const Color(0xFF1F222A),
+        color: theme.colorScheme.surfaceVariant,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        child: const IgnorePointer(
+        child: IgnorePointer(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: TextField(
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               decoration: InputDecoration(
                 icon: Padding(
-                  padding: EdgeInsets.only(left: 12.0),
-                  child: Icon(Icons.search, color: Colors.white54, size: 20),
+                  padding: const EdgeInsets.only(left: 12.0),
+                  child: Icon(Icons.search, color: theme.hintColor, size: 20),
                 ),
                 hintText: '무엇을 도와드릴까요? (예: 전원이 안 켜져요)',
-                hintStyle: TextStyle(color: Colors.white54),
+                hintStyle: TextStyle(color: theme.hintColor),
                 border: InputBorder.none,
                 suffixIcon: CircleAvatar(
-                  backgroundColor: Colors.blueAccent,
-                  child: Icon(Icons.arrow_forward, color: Colors.white),
+                  backgroundColor: theme.colorScheme.primary,
+                  child: Icon(Icons.arrow_forward, color: theme.colorScheme.onPrimary),
                 ),
               ),
             ),
@@ -146,6 +152,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -157,8 +164,8 @@ class HomePage extends StatelessWidget {
           TextButton(
             onPressed: () => _navigateToFindWasher(context),
             style: TextButton.styleFrom(
-              backgroundColor: Colors.blueAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
@@ -174,13 +181,14 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildProductList(BuildContext context, WasherModel? myWasher) {
+    final theme = Theme.of(context);
     if (myWasher == null) {
       return SizedBox(
         height: 150,
         child: Center(
           child: Text(
             '아직 내 세탁기가 설정되지 않았습니다',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 14, color: theme.hintColor),
           ),
         ),
       );
@@ -195,6 +203,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildProductCard(BuildContext context, WasherModel washer) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () => Navigator.push(
         context,
@@ -205,7 +214,7 @@ class HomePage extends StatelessWidget {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.grey[300]!),
+          side: BorderSide(color: theme.dividerColor),
         ),
         child: Container(
           width: 120,
@@ -221,14 +230,14 @@ class HomePage extends StatelessWidget {
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: theme.colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Icon(
                             Icons.local_laundry_service,
                             size: 40,
-                            color: Colors.grey,
+                            color: theme.hintColor,
                           ),
                         ),
                       );
@@ -265,16 +274,17 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildFaqChip(BuildContext context, String label, Widget page) {
+    final theme = Theme.of(context);
     return ActionChip(
       label: Text(label),
       onPressed: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => page),
       ),
-      backgroundColor: Colors.grey[200],
+      backgroundColor: theme.colorScheme.surfaceVariant,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.grey[300]!),
+        side: BorderSide(color: theme.dividerColor),
       ),
     );
   }

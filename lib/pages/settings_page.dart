@@ -39,14 +39,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
+
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
         title: const Text('마이페이지'),
       ),
       body: Padding(
@@ -54,11 +53,11 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '계정',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: theme.hintColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -69,9 +68,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 Text(_userEmail, style: const TextStyle(fontSize: 16)),
                 TextButton(
                   onPressed: _handleLogout,
-                  child: const Text(
+                  child: Text(
                     '로그아웃',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(color: theme.colorScheme.error),
                   ),
                 ),
               ],
@@ -85,11 +84,11 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
             const Divider(height: 32),
-            const Text(
+            Text(
               '알림',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: theme.hintColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -109,11 +108,11 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
             const Divider(height: 32),
-            const Text(
+            Text(
               '테마',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: theme.hintColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -154,9 +153,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Text('앱 버전', style: TextStyle(fontSize: 16)),
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       '1.11.14',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(fontSize: 16, color: theme.hintColor),
                     ),
                     const SizedBox(width: 8),
                     IconButton(

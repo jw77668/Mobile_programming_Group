@@ -17,6 +17,7 @@ import 'pages/note_models.dart';
 import 'services/washer_service.dart'; // WasherService import
 import 'providers/chat_provider.dart';
 import 'models/chat_data.dart';
+import 'providers/checklist_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,7 @@ void main() async {
         ChangeNotifierProvider.value(value: washerService),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider.value(value: chatProvider),
+        ChangeNotifierProvider(create: (_) => ChecklistProvider()),
       ],
       child: const SmartGuideApp(),
     ),
