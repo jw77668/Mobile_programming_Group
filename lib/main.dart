@@ -115,9 +115,9 @@ class _AuthCheckerState extends State<AuthChecker> {
 
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final email = prefs.getString('user_email');
+    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
     setState(() {
-      _isLoggedIn = email != null && email.isNotEmpty;
+      _isLoggedIn = isLoggedIn;
       _isLoading = false;
     });
   }
