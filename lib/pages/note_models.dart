@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:hive/hive.dart';
 
 part 'note_models.g.dart';
@@ -31,6 +32,22 @@ class Note {
     this.type = NoteType.Text,
     this.isStarred = false,
   });
+
+  String get plainText {
+    if (content.isEmpty) return '';
+    try {
+      final List<dynamic> jsonData = jsonDecode(content);
+      final buffer = StringBuffer();
+      for (var item in jsonData) {
+        if (item is Map<String, dynamic> && item.containsKey('insert')) {
+          buffer.write(item['insert']);
+        }
+      }
+      return buffer.toString().replaceAll('\n', ' ').trim();
+    } catch (e) {
+      return content; // Fallback for plain text notes
+    }
+  }
 
   String get dateString {
     final now = DateTime.now();

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../providers/theme_provider.dart';
 import 'note_editor_page.dart';
 import 'note_models.dart';
-
-part 'notes_list_page.g.dart';
 
 
 class NoteListPage extends StatefulWidget {
@@ -23,13 +24,20 @@ class _NoteListPageState extends State<NoteListPage> {
   @override
   void initState() {
     super.initState();
-    _notesBoxFuture = Hive.openBox<Note>('notesBox_v3');
+    _notesBoxFuture = _openUserNotesBox();
 
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
       });
     });
+  }
+
+  Future<Box<Note>> _openUserNotesBox() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userEmail = prefs.getString('user_email');
+    final boxName = 'notesBox_v3_${userEmail ?? 'default_user'}';
+    return Hive.openBox<Note>(boxName);
   }
 
   @override
@@ -42,8 +50,11 @@ class _NoteListPageState extends State<NoteListPage> {
     final filteredNotes = _searchQuery.isEmpty
         ? box.values.toList()
         : box.values
-            .where((note) =>
-                note.title.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .where((note) {
+              final query = _searchQuery.toLowerCase();
+              return note.title.toLowerCase().contains(query) || 
+                     note.plainText.toLowerCase().contains(query);
+            })
             .toList();
 
     filteredNotes.sort((a, b) {
@@ -71,20 +82,23 @@ class _NoteListPageState extends State<NoteListPage> {
     );
     if (result is Note) {
       await box.put(result.id, result);
+    } else if (result == 'delete' && note != null) {
+      await box.delete(note.id);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('노트 목록', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
+        title: Text('노트 목록', style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         actions: [
           PopupMenuButton<SortOption>(
-            icon: const Icon(Icons.sort, color: Colors.black),
+            icon: Icon(Icons.sort, color: theme.iconTheme.color),
             onSelected: (SortOption result) {
               setState(() {
                 _sortOption = result;
@@ -156,24 +170,28 @@ class _NoteListPageState extends State<NoteListPage> {
             final box = await _notesBoxFuture;
             _navigateToNoteEditor(context, box, null);
           },
-          backgroundColor: Colors.blueAccent,
-          child: const Icon(Icons.add)
+          backgroundColor: Colors.lightBlue[200],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: const Icon(Icons.note_add, color: Colors.white),
       ),
     );
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: Colors.black),
+        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: '검색',
-          hintStyle: TextStyle(color: Colors.grey[600]),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          hintStyle: TextStyle(color: theme.hintColor),
+          prefixIcon: Icon(Icons.search, color: theme.hintColor),
           filled: true,
-          fillColor: Colors.grey[200],
+          fillColor: theme.colorScheme.surfaceVariant,
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -181,7 +199,7 @@ class _NoteListPageState extends State<NoteListPage> {
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
+                  icon: Icon(Icons.clear, color: theme.hintColor),
                   onPressed: () => _searchController.clear(),
                 )
               : null,
@@ -191,25 +209,38 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   Widget _buildNoteItem(BuildContext context, Note note, Box<Note> box) {
+    final theme = Theme.of(context);
     return Card(
-      color: Colors.white,
+      color: theme.cardColor,
       elevation: 0.5,
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.grey.shade300, width: 1),
+        side: BorderSide(color: theme.dividerColor, width: 1),
       ),
       child: ListTile(
         onTap: () => _navigateToNoteEditor(context, box, note),
         title: Text(
           note.title,
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: Text(
-            note.fullDateString,
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                note.plainText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                note.fullDateString,
+                style: TextStyle(color: theme.hintColor, fontSize: 12),
+              ),
+            ],
           ),
         ),
         trailing: Row(
@@ -218,7 +249,7 @@ class _NoteListPageState extends State<NoteListPage> {
             IconButton(
               icon: Icon(
                 note.isStarred ? Icons.star : Icons.star_border,
-                color: note.isStarred ? Colors.amber[600] : Colors.grey,
+                color: note.isStarred ? Colors.amber[600] : theme.hintColor,
               ),
               onPressed: () {
                 note.isStarred = !note.isStarred;
@@ -226,11 +257,11 @@ class _NoteListPageState extends State<NoteListPage> {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blueGrey, size: 20),
+              icon: Icon(Icons.edit, color: theme.iconTheme.color, size: 20),
               onPressed: () => _navigateToNoteEditor(context, box, note),
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
+              icon: Icon(Icons.delete, color: theme.colorScheme.error, size: 20),
               onPressed: () => box.delete(note.id),
             ),
           ],

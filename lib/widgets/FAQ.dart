@@ -17,6 +17,7 @@ class FAQPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -34,8 +35,8 @@ class FAQPage extends StatelessWidget {
         ),
         centerTitle: false,
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        foregroundColor: theme.colorScheme.onBackground,
       ),
 
       body: SingleChildScrollView(
@@ -46,10 +47,10 @@ class FAQPage extends StatelessWidget {
             // 제목
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: theme.colorScheme.onBackground,
               ),
             ),
 
@@ -58,9 +59,9 @@ class FAQPage extends StatelessWidget {
             // 개요
             Text(
               summary,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
-                color: Colors.black87,
+                color: theme.colorScheme.onSurface,
                 height: 1.4,
               ),
             ),

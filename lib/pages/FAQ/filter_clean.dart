@@ -7,6 +7,7 @@ class FilterCleanFAQ extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return FAQPage(
       title: "필터 청소하는 방법",
       question: "필터 청소하기",
@@ -15,18 +16,18 @@ class FilterCleanFAQ extends StatelessWidget {
           "필터를 주기적으로 관리해주면 배수 불량, 악취, 소음 등의 문제를 줄일 수 있습니다.",
       contents: [
         // 해결 방법 제목
-        const FAQSectionHeader(
+        FAQSectionHeader(
           title: "해결 방법",
           icon: Icons.build_circle,
-          iconColor: Colors.blueAccent,
+          iconColor: theme.colorScheme.secondary,
         ),
         const SizedBox(height: 8),
 
         // 해결 방법 내용
-        const Text.rich(
+        Text.rich(
           TextSpan(
-            style: TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
-            children: [
+            style: TextStyle(fontSize: 15, height: 1.5, color: theme.colorScheme.onSurface),
+            children: const [
               TextSpan(
                 text: "1. 세탁기 전원을 끄고, 반드시 플러그를 콘센트에서 뽑습니다.\n",
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -77,20 +78,20 @@ class FilterCleanFAQ extends StatelessWidget {
         // const SizedBox(height: 24),
 
         // 주의 사항 제목
-        const FAQSectionHeader(
+        FAQSectionHeader(
           title: "주의 사항",
           icon: Icons.warning_amber_rounded,
-          iconColor: Colors.orangeAccent,
+          iconColor: theme.colorScheme.error,
         ),
         const SizedBox(height: 8),
 
         // 주의 사항 내용
-        const Text(
+        Text(
           "- 필터를 완전히 잠그지 않으면 사용 중 물이 새어나올 수 있으니, 끝까지 꽉 잠겼는지 반드시 확인하세요.\n"
           "- 청소할 때는 반드시 전원을 끄고 플러그를 뽑은 상태에서 작업하세요.\n"
           "- 배수 필터 청소 주기는 사용량에 따라 다르나, 일반적으로 1~2개월에 한 번 정도를 권장합니다.\n"
           "- 필터에 큰 이물질(동전, 단추 등)이 자주 발견될 경우, 세탁 전 주머니를 꼭 확인해 주세요.",
-          style: TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
+          style: TextStyle(fontSize: 15, height: 1.5, color: theme.colorScheme.onSurface),
         ),
 
         const SizedBox(height: 30),

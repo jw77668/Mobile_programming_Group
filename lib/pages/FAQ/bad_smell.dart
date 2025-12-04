@@ -7,6 +7,7 @@ class BadSmellFAQ extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return FAQPage(
       title: "세탁기에서 악취가 날 때 해결 방법",
       question: "악취가 나요",
@@ -15,18 +16,18 @@ class BadSmellFAQ extends StatelessWidget {
           "정기적인 세탁조 청소와 통풍 관리로 악취를 예방할 수 있습니다.",
       contents: [
         // 해결 방법 제목
-        const FAQSectionHeader(
+        FAQSectionHeader(
           title: "해결 방법",
           icon: Icons.build_circle,
-          iconColor: Colors.blueAccent,
+          iconColor: theme.colorScheme.secondary,
         ),
         const SizedBox(height: 8),
 
         // 해결 방법 내용
-        const Text.rich(
+        Text.rich(
           TextSpan(
-            style: TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
-            children: [
+            style: TextStyle(fontSize: 15, height: 1.5, color: theme.colorScheme.onSurface),
+            children: const [
               TextSpan(
                 text: "1. 세탁조 클리너로 내부 세탁을 실행하세요.\n",
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -91,19 +92,19 @@ class BadSmellFAQ extends StatelessWidget {
         // const SizedBox(height: 24),
 
         // 주의 사항 제목
-        const FAQSectionHeader(
+        FAQSectionHeader(
           title: "주의 사항",
           icon: Icons.warning_amber_rounded,
-          iconColor: Colors.orangeAccent,
+          iconColor: theme.colorScheme.error,
         ),
         const SizedBox(height: 8),
 
         // 주의 사항 내용
-        const Text(
+        Text(
           "- 세탁조 청소 시, 권장량 이상의 클리너를 사용하면 거품이 과다 발생할 수 있으니 사용 설명서를 꼭 확인하세요.\n"
           "- 표백제, 식초 등을 과도하게 섞어 사용하는 것은 부품 손상이나 고장의 원인이 될 수 있습니다.\n"
           "- 악취가 매우 심하고, 곰팡이 얼룩이 넓게 퍼져 있다면 전문 세척 서비스를 고려해 주세요.",
-          style: TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
+          style: TextStyle(fontSize: 15, height: 1.5, color: theme.colorScheme.onSurface),
         ),
 
         const SizedBox(height: 30),
