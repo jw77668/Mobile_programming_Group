@@ -16,7 +16,6 @@ import 'pages/notes_list_page.dart' hide NoteAdapter, NoteTypeAdapter;
 import 'pages/note_models.dart';
 import 'services/washer_service.dart'; // WasherService import
 import 'providers/chat_provider.dart';
-import 'models/chat_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,11 +43,9 @@ void main() async {
   final washerService = WasherService();
   await washerService.loadInitialWasher();
 
-  // ChatProvider 초기화 및 데이터 로드
-  final chatProvider = ChatProvider(
-    ChatData(messages: [], recentSolutions: []),
-  );
-  await chatProvider.loadChatData();
+  // ChatProvider 초기화 및 데이터 로드 (수정된 부분)
+  final chatProvider = ChatProvider();
+  await chatProvider.loadInitialChat(); // 수정된 메소드 호출
 
   runApp(
     MultiProvider(

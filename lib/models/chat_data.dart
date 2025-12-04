@@ -1,14 +1,29 @@
+import 'package:uuid/uuid.dart';
 import 'message.dart';
 import 'solution.dart';
 
 class ChatData {
+  final String id;
+  final DateTime startTime;
   final List<Message> messages;
   final List<Solution> recentSolutions;
 
-  ChatData({required this.messages, required this.recentSolutions});
+  ChatData({
+    String? id,
+    DateTime? startTime,
+    List<Message>? messages,
+    List<Solution>? recentSolutions,
+  })  : id = id ?? const Uuid().v4(),
+        startTime = startTime ?? DateTime.now(),
+        messages = messages ?? [],
+        recentSolutions = recentSolutions ?? [];
 
   factory ChatData.fromJson(Map<String, dynamic> json) {
     return ChatData(
+      id: json['id'] as String?,
+      startTime: json['startTime'] != null
+          ? DateTime.parse(json['startTime'] as String)
+          : null,
       messages:
           (json['messages'] as List<dynamic>?)
               ?.map((e) => Message.fromJson(e as Map<String, dynamic>))
@@ -23,7 +38,9 @@ class ChatData {
   }
 
   Map<String, dynamic> toJson() => {
-    'messages': messages.map((e) => e.toJson()).toList(),
-    'recentSolutions': recentSolutions.map((e) => e.toJson()).toList(),
-  };
+        'id': id,
+        'startTime': startTime.toIso8601String(),
+        'messages': messages.map((e) => e.toJson()).toList(),
+        'recentSolutions': recentSolutions.map((e) => e.toJson()).toList(),
+      };
 }

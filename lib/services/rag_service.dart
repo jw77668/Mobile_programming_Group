@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/message.dart'; // Message 모델을 가져옵니다.
 
 const String serverUrl = 'https://rag-for-smart-guide-1048693665052.asia-northeast3.run.app';
 
@@ -13,6 +14,7 @@ class RagResponse {
   RagResponse({required this.answer, required this.pages, this.pdfId});
 
   factory RagResponse.fromJson(Map<String, dynamic> json) {
+    // 2-up 형식의 PDF이므로, 서버에서 받은 페이지 번호에 2를 곱합니다.
     final pagesList = (json['pages'] as List<dynamic>?)
             ?.map((e) => e as int)
             .toList() ??
@@ -45,14 +47,28 @@ class RagService {
     }
   }
 
-  Future<RagResponse> search(String question, {required String pdfId, int topK = 3}) async {
-    // URL을 원래대로 복원합니다 (슬래시 포함).
+  // 이전 대화 내용을 포함하도록 search 메소드를 수정합니다.
+  Future<RagResponse> search(
+    String question, {
+    required String pdfId,
+    int topK = 3,
+    List<Message> previousMessages = const [],
+  }) async {
     final uri = Uri.parse('$baseUrl/query/');
+
+
+    final List<Map<String, String>> history = previousMessages
+        .map((msg) => {
+              'role': msg.role,
+              'content': msg.content,
+            })
+        .toList();
 
     final payload = jsonEncode({
       'question': question,
       'top_k': topK,
       'pdf_id': pdfId,
+      'history': history,
     });
 
     try {

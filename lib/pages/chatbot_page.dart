@@ -34,7 +34,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-      chatProvider.loadChatData().then((_) {
+      // 수정한 메소드 이름으로 변경
+      chatProvider.loadInitialChat().then((_) {
         if (widget.solution != null) {
           chatProvider.onSolutionSelected(widget.solution!);
         }
@@ -93,41 +94,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
       _controller.clear();
 
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-      final userMessage = Message(
-        id: const Uuid().v4(),
-        role: 'user',
-        content: userMessageContent,
-        createdAt: DateTime.now(),
-      );
-      chatProvider.addMessage(userMessage);
-
-      setState(() => _isBotReplying = true);
-
-      try {
-        final ragResponse = await _ragService.search(
-          userMessageContent,
-          pdfId: _currentWasher!.pdfId,
-        );
-        final botMessage = Message(
-          id: const Uuid().v4(),
-          role: 'assistant',
-          content: ragResponse.answer,
-          createdAt: DateTime.now(),
-          pages: ragResponse.pages,
-        );
-        chatProvider.addMessage(botMessage);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('오류: ${e.toString().replaceAll("Exception: ", "")}')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isBotReplying = false);
-        }
-      }
+      
+      // sendQuestion 메소드를 사용하도록 변경
+      await chatProvider.sendQuestion(userMessageContent, pdfId: _currentWasher!.pdfId);
     }
   }
 
@@ -153,7 +122,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
       setState(() => _isGeneratingTitle = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('해결 기록에 추가되었습니다.'),
+          content: Text('해결 기록이 업데이트되었습니다.'), // 메시지 변경
           duration: Duration(seconds: 2),
         ),
       );
@@ -216,9 +185,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
           itemBuilder: (context, index) {
             final message = chatProvider.messages[index];
             final isAssistant = message.role == 'assistant';
-            final isInitialMessage = index == chatProvider.messages.length - 1;
+            final isLatestMessage = index == 0;
 
-            // 사용자 질문을 찾습니다.
             Message? previousMessage;
             if (index + 1 < chatProvider.messages.length) {
               previousMessage = chatProvider.messages[index + 1];
@@ -250,8 +218,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
                           .toList(),
                     ),
                   ),
+                // [수정] hasSolvedRecord 조건을 제거하여 버튼이 항상 보이도록 합니다.
                 if (isAssistant &&
-                    !isInitialMessage &&
+                    isLatestMessage && 
                     previousMessage != null &&
                     previousMessage.role == 'user')
                   Padding(
@@ -279,10 +248,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   Widget _buildInputArea() {
     bool canSend = _chatState == ChatState.ready && !_isBotReplying;
+    // isLoading 상태를 chatProvider에서 가져옵니다.
+    bool isLoading = context.watch<ChatProvider>().isLoading;
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(children: [
-        if (_isBotReplying)
+        if (isLoading) // chatProvider의 isLoading 상태를 사용
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
