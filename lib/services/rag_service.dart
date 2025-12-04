@@ -59,7 +59,7 @@ class RagService {
 
     final List<Map<String, String>> history = previousMessages
         .map((msg) => {
-              'role': msg.role,
+              'source': msg.role,
               'content': msg.content,
             })
         .toList();

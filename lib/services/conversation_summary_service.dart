@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/message.dart';
 
 //새로운 키 필요
-const String _openRouterApiKey = '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';
+const String _openRouterApiKey = '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';
 const String _openRouterApiUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
 class ConversationSummaryService {
@@ -13,7 +13,7 @@ class ConversationSummaryService {
     required String question,
     required String answer,
   }) async {
-    if (_openRouterApiKey == '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') {
+    if (_openRouterApiKey == 'sk-or-v1-' || question.isEmpty) {
       return '임시 제목: ${question.substring(0, question.length > 10 ? 10 : question.length)}...';
     }
 
@@ -58,16 +58,23 @@ class ConversationSummaryService {
     }
   }
 
-  /// 대화 기록을 요약하는 새로운 메소드
+  /// 대화 기록을 점진적으로 요약하는 메소드
   Future<String> summarizeHistory({
     required List<Message> messages,
+    String? previousSummary,
   }) async {
-    if (_openRouterApiKey == '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' || messages.isEmpty) {
-      return ''; // 키가 없거나 메시지가 없으면 요약하지 않음
+    if (_openRouterApiKey == 'sk-or-v1-' || messages.isEmpty) {
+      return previousSummary ?? ''; // 키가 없거나 메시지가 없으면 이전 요약 또는 빈 문자열 반환
     }
 
-    final conversationText =
-        messages.map((m) => '${m.role}: ${m.content}').join('\n\n');
+    // 전체 대화 대신 최근 일부만 사용 (예: 마지막 10개)
+    const int recentMessageCount = 10;
+    final recentMessages = messages.length > recentMessageCount
+        ? messages.sublist(messages.length - recentMessageCount)
+        : messages;
+
+    final newConversationText =
+        recentMessages.map((m) => '${m.role}: ${m.content}').join('\n\n');
 
     final uri = Uri.parse(_openRouterApiUrl);
     final headers = {
@@ -80,14 +87,14 @@ class ConversationSummaryService {
         {
           'role': 'system',
           'content':
-              '다음은 사용자(user)와 어시스턴트(assistant) 간의 대화 내용입니다. 이 대화의 핵심 내용을 간결하게 한국어로 요약해줘. 요약은 대화의 맥락을 유지하면서 중요한 정보만 포함해야 합니다. 이 요약은 추후 대화의 맥락으로 다시 사용될 것입니다.',
+              '다음은 이전 대화 요약과 새로운 대화 내용입니다. 이 두 가지를 합쳐서 전체 대화의 핵심 내용을 담은 새로운 요약본을 한국어로 만들어줘. 새로운 요약은 기존 요약의 맥락을 유지하면서 최신 정보를 반영해야 합니다. 이 요약은 추후 대화의 맥락으로 다시 사용될 것입니다.',
         },
         {
           'role': 'user',
-          'content': conversationText,
+          'content': '이전 요약: ${previousSummary ?? '없음'}\n\n---\n\n새로운 대화:\n$newConversationText',
         },
       ],
-      'max_tokens': 200, // 요약을 위해 토큰 수를 늘림
+      'max_tokens': 250, // 요약을 위해 토큰 수를 적절히 조정
       'temperature': 0.5,
     });
 
@@ -102,10 +109,12 @@ class ConversationSummaryService {
         String summary = data['choices'][0]['message']['content'] ?? '';
         return summary.replaceAll(RegExp(r'["*`]'), '').trim();
       } else {
-        return ''; // 실패 시 빈 문자열 반환
+        // 실패 시 이전 요약을 그대로 반환하여 맥락 유지
+        return previousSummary ?? '';
       }
     } catch (e) {
-      return ''; // 오류 발생 시 빈 문자열 반환
+      // 오류 발생 시에도 이전 요약을 반환
+      return previousSummary ?? '';
     }
   }
 }

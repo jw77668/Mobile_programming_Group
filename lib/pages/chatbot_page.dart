@@ -136,7 +136,21 @@ class _ChatbotPageState extends State<ChatbotPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('$washerName 챗봇')),
+      appBar: AppBar(
+        title: Text('$washerName 챗봇'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_comment_outlined),
+            tooltip: '새로운 채팅',
+            onPressed: () {
+              final chatProvider =
+                  Provider.of<ChatProvider>(context, listen: false);
+              chatProvider.startNewChat();
+              _initialize();
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(child: _buildBody(chatProvider, theme)),
@@ -194,20 +208,50 @@ class _ChatbotPageState extends State<ChatbotPage> {
               previousMessage = chatProvider.messages[index + 1];
             }
 
+            String displayContent = message.content;
+            List<int> pages = List.from(message.pages);
+
+            if (isAssistant) {
+              final accuracyIndex = displayContent.indexOf('정확도:');
+              final sourceMatch = RegExp(r'출처: 페이지 (.*)').firstMatch(displayContent);
+
+              if (sourceMatch != null) {
+                final pageString = sourceMatch.group(1) ?? '';
+                final pageNumbers = RegExp(r'\d+')
+                    .allMatches(pageString)
+                    .map((m) => int.tryParse(m.group(0) ?? ''))
+                    .where((p) => p != null)
+                    .cast<int>()
+                    .toList();
+                pages = {...pages, ...pageNumbers}.toList();
+              }
+
+              int contentEndIndex = -1;
+              if (accuracyIndex != -1) {
+                contentEndIndex = accuracyIndex;
+              } else if (sourceMatch != null) {
+                contentEndIndex = sourceMatch.start;
+              }
+
+              if (contentEndIndex != -1) {
+                displayContent = displayContent.substring(0, contentEndIndex).trim();
+              }
+            }
+
             return Column(
               crossAxisAlignment: isAssistant
                   ? CrossAxisAlignment.start
                   : CrossAxisAlignment.end,
               children: [
-                ChatBubble(message: message.content, isMe: !isAssistant),
-                if (isAssistant && message.pages.isNotEmpty)
+                ChatBubble(message: displayContent, isMe: !isAssistant),
+                if (isAssistant && pages.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(
                         left: 60.0, right: 16.0, bottom: 8.0, top: 4.0),
                     child: Wrap(
                       spacing: 8.0,
                       runSpacing: 4.0,
-                      children: message.pages
+                      children: pages
                           .map((page) => ActionChip(
                                 avatar: Icon(Icons.find_in_page_outlined,
                                     size: 18, color: theme.colorScheme.primary),
