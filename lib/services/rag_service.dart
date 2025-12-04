@@ -14,11 +14,13 @@ class RagResponse {
   RagResponse({required this.answer, required this.pages, this.pdfId});
 
   factory RagResponse.fromJson(Map<String, dynamic> json) {
-    // 2-up 형식의 PDF이므로, 서버에서 받은 페이지 번호에 2를 곱합니다.
+    // 서버가 문서 원본 페이지를 제공하므로, 클라이언트에서 페이지 변환을 하지 않습니다.
     final pagesList = (json['pages'] as List<dynamic>?)
             ?.map((e) => e as int)
+            .toSet() // 중복된 PDF 페이지 번호를 제거합니다.
             .toList() ??
         [];
+
     return RagResponse(
       answer: json['answer'] ?? '답변을 받는 데 실패했습니다.',
       pages: pagesList,

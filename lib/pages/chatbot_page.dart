@@ -1,3 +1,4 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_guide/models/message.dart';
@@ -23,6 +24,7 @@ class ChatbotPage extends StatefulWidget {
 class _ChatbotPageState extends State<ChatbotPage> {
   final TextEditingController _controller = TextEditingController();
   final RagService _ragService = RagService();
+  late ConfettiController _confettiController;
   bool _isBotReplying = false;
   bool _isGeneratingTitle = false; // 제목 생성 중 상태 변수
   ChatState _chatState = ChatState.initializing;
@@ -32,6 +34,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
       // 수정한 메소드 이름으로 변경
@@ -41,6 +44,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
         }
       });
     });
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
   }
 
   @override
@@ -100,13 +109,17 @@ class _ChatbotPageState extends State<ChatbotPage> {
     }
   }
 
-  void _navigateToPdfPage(int page) {
+  void _navigateToPdfPage(int docPage) {
     if (_currentWasher != null) {
+      // 문서 페이지 번호를 PDF 뷰어 페이지 번호로 변환
+      // 공식: pdf_page = ceil((doc_page + 2) / 2)
+      final pdfPage = ((docPage + 2) / 2).ceil();
+
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) =>
-              ManualViewerPage(washer: _currentWasher, initialPage: page),
+              ManualViewerPage(washer: _currentWasher, initialPage: pdfPage),
         ),
       );
     }
@@ -120,6 +133,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
     if (mounted) {
       setState(() => _isGeneratingTitle = false);
+      _confettiController.play(); // 애니메이션 실행
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('해결 기록이 업데이트되었습니다.'), // 메시지 변경
@@ -151,10 +165,23 @@ class _ChatbotPageState extends State<ChatbotPage> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
+        alignment: Alignment.topCenter,
         children: [
-          Expanded(child: _buildBody(chatProvider, theme)),
-          _buildInputArea(theme),
+          Column(
+            children: [
+              Expanded(child: _buildBody(chatProvider, theme)),
+              _buildInputArea(theme),
+            ],
+          ),
+          ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirectionality: BlastDirectionality.explosive,
+            shouldLoop: false,
+            colors: const [
+              Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple
+            ],
+          ),
         ],
       ),
     );
@@ -247,42 +274,81 @@ class _ChatbotPageState extends State<ChatbotPage> {
                 if (isAssistant && pages.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(
-                        left: 60.0, right: 16.0, bottom: 8.0, top: 4.0),
-                    child: Wrap(
-                      spacing: 8.0,
-                      runSpacing: 4.0,
-                      children: pages
-                          .map((page) => ActionChip(
-                                avatar: Icon(Icons.find_in_page_outlined,
-                                    size: 18, color: theme.colorScheme.primary),
-                                label: Text('p. $page'),
-                                labelStyle: TextStyle(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.w600),
-                                onPressed: () => _navigateToPdfPage(page),
-                              ))
-                          .toList(),
+                        left: 8.0, right: 16.0, bottom: 8.0, top: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '관련 페이지',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.hintColor,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children: pages
+                              .map((page) => TextButton.icon(
+                                    style: TextButton.styleFrom(
+                                      backgroundColor:
+                                          theme.colorScheme.primaryContainer,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                    icon: Icon(
+                                      Icons.auto_stories_outlined,
+                                      size: 16,
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                    ),
+                                    label: Text(
+                                      'p.$page',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onPrimaryContainer,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    onPressed: () => _navigateToPdfPage(page),
+                                  ))
+                              .toList(),
+                        ),
+                      ],
                     ),
                   ),
-                // [수정] hasSolvedRecord 조건을 제거하여 버튼이 항상 보이도록 합니다.
                 if (isAssistant &&
-                    isLatestMessage && 
+                    isLatestMessage &&
                     previousMessage != null &&
                     previousMessage.role == 'user')
                   Padding(
                     padding: const EdgeInsets.only(
-                        left: 60.0, top: 4.0, bottom: 8.0),
-                    child: ElevatedButton(
+                        left: 8.0, top: 4.0, bottom: 8.0),
+                    child: ElevatedButton.icon(
                       onPressed: _isGeneratingTitle
                           ? null
                           : () => _addSolution(message, previousMessage!.content),
-                      child: _isGeneratingTitle
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
+                      icon: _isGeneratingTitle
                           ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white70),
                             )
-                          : const Text('해결됐어요!'),
+                          : const Icon(Icons.check_circle_outline, size: 18),
+                      label: Text(_isGeneratingTitle ? '저장 중...' : '해결됐어요!'),
                     ),
                   ),
               ],
