@@ -31,7 +31,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // 모든 데이터 초기화
+    await prefs.setBool('is_logged_in', false); // 로그인 상태만 false로 변경
     if (mounted) {
       widget.onLogout?.call();
     }
@@ -76,13 +76,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('연결된 소셜 계정', style: TextStyle(fontSize: 16)),
-                TextButton(onPressed: () {}, child: const Text('Google')),
-              ],
-            ),
             const Divider(height: 32),
             Text(
               '알림',
