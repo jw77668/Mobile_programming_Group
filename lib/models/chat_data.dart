@@ -7,12 +7,14 @@ class ChatData {
   final DateTime startTime;
   final List<Message> messages;
   final List<Solution> recentSolutions;
+  final String? washerCode; // 세탁기 코드 추가
 
   ChatData({
     String? id,
     DateTime? startTime,
     List<Message>? messages,
     List<Solution>? recentSolutions,
+    this.washerCode,
   })  : id = id ?? const Uuid().v4(),
         startTime = startTime ?? DateTime.now(),
         messages = messages ?? [],
@@ -34,6 +36,7 @@ class ChatData {
               ?.map((e) => Solution.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      washerCode: json['washerCode'] as String?,
     );
   }
 
@@ -42,5 +45,6 @@ class ChatData {
         'startTime': startTime.toIso8601String(),
         'messages': messages.map((e) => e.toJson()).toList(),
         'recentSolutions': recentSolutions.map((e) => e.toJson()).toList(),
+        'washerCode': washerCode,
       };
 }

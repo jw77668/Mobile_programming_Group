@@ -14,10 +14,12 @@ import 'pages/login_page.dart';
 import 'providers/theme_provider.dart';
 import 'pages/notes_list_page.dart' hide NoteAdapter, NoteTypeAdapter;
 import 'pages/note_models.dart';
-import 'services/washer_service.dart'; // WasherService import
+import 'services/washer_service.dart';
 import 'providers/chat_provider.dart';
 import 'models/chat_data.dart';
 import 'providers/checklist_provider.dart';
+
+final GlobalKey<_MainScreenState> mainScreenKey = GlobalKey<_MainScreenState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,9 +47,24 @@ void main() async {
   final washerService = WasherService();
   await washerService.loadInitialWasher();
 
-  // ChatProvider 초기화 및 데이터 로드 (수정된 부분)
-  final chatProvider = ChatProvider();
-  await chatProvider.loadInitialChat(); // 수정된 메소드 호출
+  washerService.onWasherUpdated = (washer) {
+    final context = mainScreenKey.currentContext;
+    if (context != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            washer != null
+                ? '${washer.washerName}이(가) 내 세탁기로 설정되었습니다.'
+                : '내 세탁기 정보가 삭제되었습니다.',
+          ),
+          backgroundColor: washer != null ? Colors.green : Colors.red,
+        ),
+      );
+    }
+  };
+
+  final chatProvider = ChatProvider(washerService);
+  await chatProvider.loadInitialChat();
 
   runApp(
     MultiProvider(
@@ -130,6 +147,7 @@ class _AuthCheckerState extends State<AuthChecker> {
 
     return _isLoggedIn
         ? MainScreen(
+            key: mainScreenKey, 
             onLogout: () {
               setState(() {
                 _isLoggedIn = false;
@@ -157,8 +175,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  // 페이지 목록을 위젯의 생명주기 동안 한 번만 생성하여 성능을 최적화합니다.
-  // Consumer 위젯을 사용하여 WasherService의 변경을 감지하고 ChatbotPage만 다시 빌드합니다.
   late final List<Widget> _pages;
 
   @override
@@ -167,7 +183,6 @@ class _MainScreenState extends State<MainScreen> {
     _pages = [
       const HomePage(),
       const FindWasherPage(),
-      // Consumer를 사용하여 WasherService의 상태가 변경될 때만 이 부분을 다시 빌드합니다.
       Consumer<WasherService>(
         builder: (context, washerService, child) {
           return washerService.currentWasher != null
@@ -190,6 +205,12 @@ class _MainScreenState extends State<MainScreen> {
         onLogout: widget.onLogout,
       ),
     ];
+  }
+
+  void changeTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
   }
 
   @override

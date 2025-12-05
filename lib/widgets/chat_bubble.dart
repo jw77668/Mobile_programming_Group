@@ -5,10 +5,12 @@ class ChatBubble extends StatelessWidget {
     super.key,
     required this.message,
     required this.isMe,
+    this.fontSize = 14.0,
   });
 
   final String message;
   final bool isMe;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +29,7 @@ class ChatBubble extends StatelessWidget {
         ),
         child: Text(
           message,
-          style: TextStyle(color: textColor),
+          style: TextStyle(color: textColor, fontSize: fontSize),
         ),
       ),
     );

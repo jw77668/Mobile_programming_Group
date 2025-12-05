@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smart_guide/main.dart';
 import '../services/washer_service.dart';
 import 'find_washer.dart';
 import 'manual_viewer_page.dart';
@@ -112,10 +113,7 @@ class HomePage extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (myWasher != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ChatbotPage()),
-          );
+          mainScreenKey.currentState?.changeTab(2);
         } else {
           ScaffoldMessenger.of(
             context,
@@ -290,12 +288,11 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildRecentHistory(BuildContext context) {
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     return RecentSolutionsHome(
-      onSolutionTap: (solution) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ChatbotPage(solution: solution)),
-        );
+      onSolutionTap: (solution) async {
+        await chatProvider.onSolutionSelected(solution);
+        mainScreenKey.currentState?.changeTab(2);
       },
     );
   }

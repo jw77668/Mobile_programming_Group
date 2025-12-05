@@ -1,8 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/washer_model.dart';
 import '../services/washer_service.dart';
+import '../providers/chat_provider.dart';
 
 class FindWasherPage extends StatefulWidget {
   const FindWasherPage({super.key});
@@ -41,26 +41,68 @@ class _FindWasherPageState extends State<FindWasherPage> {
   }
 
   Future<void> _setMyWasher(WasherModel washer) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('내 세탁기로 설정'),
-        content: Text('${washer.washerName}을(를) 내 세탁기로 설정하시겠습니까?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('아니오')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('예')),
-        ],
-      ),
-    );
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    final washerService = Provider.of<WasherService>(context, listen: false);
 
-    if (confirmed == true && mounted) {
-      await Provider.of<WasherService>(context, listen: false).updateWasher(washer);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${washer.washerName}이(가) 내 세탁기로 설정되었습니다'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    // 팝업을 띄우기 전에 키보드를 내립니다.
+    FocusScope.of(context).requestFocus(FocusNode());
+
+    if (chatProvider.hasUnsavedChat()) {
+      final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('채팅 기록 초기화'),
+              content: Text(
+                  '현재 채팅 기록이 있습니다. ${washer.washerName}으로 변경하면 현재 채팅 기록이 삭제됩니다. 계속하시겠습니까?'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('취소')),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('계속', style: TextStyle(color: Colors.redAccent)),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+
+      if (confirmed && mounted) {
+        await washerService.updateWasher(washer);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${washer.washerName}이(가) 내 세탁기로 설정되었습니다.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } else {
+      final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('내 세탁기로 설정'),
+              content: Text('${washer.washerName}을(를) 내 세탁기로 설정하시겠습니까?'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('아니오')),
+                TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('예')),
+              ],
+            ),
+          ) ??
+          false;
+
+      if (confirmed && mounted) {
+        await washerService.updateWasher(washer);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${washer.washerName}이(가) 내 세탁기로 설정되었습니다.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -95,7 +137,6 @@ class _FindWasherPageState extends State<FindWasherPage> {
                             crossAxisCount: 2,
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
-                            // ✅ 버튼 전체 비율: 가로:세로 = 2:3
                             childAspectRatio: 2 / 3,
                           ),
                       itemCount: _filteredWashers.length,
@@ -150,21 +191,55 @@ class _FindWasherPageState extends State<FindWasherPage> {
                       icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
                       tooltip: '내 세탁기에서 삭제',
                       onPressed: () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('삭제 확인'),
-                            content: Text('${currentWasher.washerName}을(를) 내 세탁기에서 삭제하시겠습니까?'),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
-                              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('삭제', style: TextStyle(color: Colors.red))),
-                            ],
-                          ),
-                        );
-                        if (confirmed == true) {
-                          await washerService.updateWasher(null);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('내 세탁기 정보가 삭제되었습니다.'), backgroundColor: Colors.red));
+                        final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+                        final washerService = Provider.of<WasherService>(context, listen: false);
+
+                        FocusScope.of(context).requestFocus(FocusNode());
+
+                        if (chatProvider.hasUnsavedChat()) {
+                          final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('현재 채팅을 초기화할까요?'),
+                                  content: const Text(
+                                      '현재 세탁기와의 채팅 기록이 남아있습니다. 이 세탁기 정보를 삭제하면 채팅 기록도 함께 초기화됩니다. 계속하시겠습니까?'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, true),
+                                      child: const Text('삭제', style: TextStyle(color: Colors.redAccent)),
+                                    ),
+                                  ],
+                                ),
+                              ) ??
+                              false;
+                          if (confirmed && mounted) {
+                            await washerService.updateWasher(null);
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text('내 세탁기 정보가 삭제되었습니다.'),
+                                backgroundColor: Colors.red));
+                          }
+                        } else {
+                          final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('삭제 확인'),
+                                  content: Text(
+                                      '${currentWasher.washerName}을(를) 내 세탁기에서 삭제하시겠습니까?'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
+                                    TextButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('삭제', style: TextStyle(color: Colors.red))),
+                                  ],
+                                ),
+                              ) ??
+                              false;
+                          if (confirmed && mounted) {
+                            await washerService.updateWasher(null);
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text('내 세탁기 정보가 삭제되었습니다.'),
+                                backgroundColor: Colors.red));
                           }
                         }
                       },
@@ -198,7 +273,6 @@ class WasherButton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ✅ 상단 2/3: 이미지 영역
             Expanded(
               flex: 2,
               child: ClipRRect(
@@ -207,7 +281,6 @@ class WasherButton extends StatelessWidget {
                 ),
                 child: Image.asset(
                   washer.imagePath,
-                  // ✅ 빈 부분 없이 꽉 차게
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
@@ -222,7 +295,6 @@ class WasherButton extends StatelessWidget {
                 ),
               ),
             ),
-            // ✅ 하단 1/3: 텍스트 영역 (이름 + 코드)
             Expanded(
               flex: 1,
               child: Padding(
