@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class SignupPage extends StatefulWidget {
   final VoidCallback? onSignupSuccess;
@@ -72,12 +72,20 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    // 회원 정보 저장
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_email', email);
-    await prefs.setString('user_password', password);
-    await prefs.setString('user_name', name);
-    await prefs.setBool('is_logged_in', false); // 회원가입 후에는 로그인되지 않은 상태
+    // 회원 정보 저장 (Hive)
+    final accountsBox = Hive.box('accounts');
+
+    if (accountsBox.containsKey(email)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('이미 존재하는 이메일입니다.')));
+      return;
+    }
+
+    await accountsBox.put(email, {
+      "password": password,
+      "name": name,
+    });
 
     if (mounted) {
       ScaffoldMessenger.of(
@@ -102,7 +110,7 @@ class _SignupPageState extends State<SignupPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onBackground),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -118,7 +126,7 @@ class _SignupPageState extends State<SignupPage> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onBackground,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
@@ -134,7 +142,7 @@ class _SignupPageState extends State<SignupPage> {
                   hintText: '홍길동',
                   hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: theme.colorScheme.surfaceVariant,
+                  fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -153,7 +161,7 @@ class _SignupPageState extends State<SignupPage> {
                   hintText: 'email@domain.com',
                   hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: theme.colorScheme.surfaceVariant,
+                  fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -174,7 +182,7 @@ class _SignupPageState extends State<SignupPage> {
                   hintText: '6자 이상 입력',
                   hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: theme.colorScheme.surfaceVariant,
+                  fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -207,7 +215,7 @@ class _SignupPageState extends State<SignupPage> {
                   hintText: '비밀번호를 다시 입력하세요',
                   hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: theme.colorScheme.surfaceVariant,
+                  fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,

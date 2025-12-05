@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -14,7 +14,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  int _loginAttempts = 0;
   bool _showFindAccount = false;
 
   @override
@@ -35,49 +34,31 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // 저장된 회원 정보 확인
-    final prefs = await SharedPreferences.getInstance();
-    final savedEmail = prefs.getString('user_email');
-    final savedPassword = prefs.getString('user_password');
+    final accountsBox = Hive.box('accounts');
 
-    if (savedEmail == null || savedPassword == null) {
-      setState(() {
-        _loginAttempts++;
-        _showFindAccount = true;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('존재하지 않는 계정입니다')));
+    if (!accountsBox.containsKey(email)) {
+      setState(() => _showFindAccount = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('존재하지 않는 계정입니다')),
+      );
       return;
     }
 
-    if (email != savedEmail) {
-      setState(() {
-        _loginAttempts++;
-        _showFindAccount = true;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('존재하지 않는 계정입니다')));
-      return;
-    }
+    final user = accountsBox.get(email);
 
-    if (password != savedPassword) {
-      setState(() {
-        _loginAttempts++;
-        _showFindAccount = true;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('비밀번호가 틀렸습니다')));
+    if (user["password"] != password) {
+      setState(() => _showFindAccount = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('비밀번호가 틀렸습니다')),
+      );
       return;
     }
 
     // 로그인 성공
-    await prefs.setBool('is_logged_in', true);
-    if (mounted) {
-      widget.onLoginSuccess?.call();
-    }
+    final sessionBox = Hive.box('session');
+    sessionBox.put("current_user", email);
+
+    widget.onLoginSuccess?.call();
   }
 
   void _showFindEmailDialog() async {
@@ -98,18 +79,25 @@ class _LoginPageState extends State<LoginPage> {
           ),
           TextButton(
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              final savedName = prefs.getString('user_name');
-              final savedEmail = prefs.getString('user_email');
+              final accountsBox = Hive.box('accounts');
+              String? foundEmail;
 
-              if (nameController.text.trim() == savedName) {
+              for (var key in accountsBox.keys) {
+                final user = accountsBox.get(key);
+                if (user['name'] == nameController.text.trim()) {
+                  foundEmail = key;
+                  break;
+                }
+              }
+
+              if (foundEmail != null) {
                 if (!mounted) return;
                 Navigator.of(context).pop();
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text('이메일 찾기 결과'),
-                    content: Text('회원님의 이메일은\n$savedEmail 입니다.'),
+                    content: Text('회원님의 이메일은\n$foundEmail 입니다.'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
@@ -154,18 +142,19 @@ class _LoginPageState extends State<LoginPage> {
           ),
           TextButton(
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              final savedEmail = prefs.getString('user_email');
-              final savedPassword = prefs.getString('user_password');
+              final accountsBox = Hive.box('accounts');
+              final email = emailController.text.trim();
 
-              if (emailController.text.trim() == savedEmail) {
+              if (accountsBox.containsKey(email)) {
+                final user = accountsBox.get(email);
+                final password = user['password'];
                 if (!mounted) return;
                 Navigator.of(context).pop();
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text('비밀번호 찾기 결과'),
-                    content: Text('회원님의 비밀번호는\n$savedPassword 입니다.'),
+                    content: Text('회원님의 비밀번호는\n$password 입니다.'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
@@ -206,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onBackground,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -216,7 +205,7 @@ class _LoginPageState extends State<LoginPage> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onBackground,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
@@ -232,7 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                   hintText: 'email@domain.com',
                   hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: theme.colorScheme.surfaceVariant,
+                  fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -253,7 +242,7 @@ class _LoginPageState extends State<LoginPage> {
                   hintText: '비밀번호를 입력하세요',
                   hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: theme.colorScheme.surfaceVariant,
+                  fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../providers/theme_provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -15,24 +15,40 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _pushNotification = true;
   String _userEmail = '';
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
-    _loadUserEmail();
+    _loadUserInfo();
   }
 
-  Future<void> _loadUserEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userEmail = prefs.getString('user_email') ?? 'user@example.com';
-    });
+  void _loadUserInfo() {
+    final sessionBox = Hive.box('session');
+    final email = sessionBox.get('current_user');
+    if (email != null) {
+      final accountsBox = Hive.box('accounts');
+      final user = accountsBox.get(email);
+      if (user != null) {
+        setState(() {
+          _userEmail = email;
+          _userName = user['name'] ?? '';
+        });
+      }
+    }
   }
 
   Future<void> _handleLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_logged_in', false); // 로그인 상태만 false로 변경
-    if (mounted) {
+    widget.onLogout?.call();
+  }
+
+  Future<void> _handleDeleteAccount() async {
+    final sessionBox = Hive.box('session');
+    final email = sessionBox.get('current_user');
+    if (email != null) {
+      final accountsBox = Hive.box('accounts');
+      await accountsBox.delete(email);
+      await sessionBox.delete('current_user');
       widget.onLogout?.call();
     }
   }
@@ -65,13 +81,52 @@ class _SettingsPageState extends State<SettingsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(_userEmail, style: const TextStyle(fontSize: 16)),
-                TextButton(
-                  onPressed: _handleLogout,
-                  child: Text(
-                    '로그아웃',
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_userName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(_userEmail, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                  ],
+                ),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _handleLogout,
+                      child: Text(
+                        '로그아웃',
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('회원 탈퇴'),
+                            content: const Text('정말로 탈퇴하시겠습니까? 모든 정보가 삭제됩니다.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('취소'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  _handleDeleteAccount();
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('탈퇴', style: TextStyle(color: theme.colorScheme.error)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: Text(
+                        '회원 탈퇴',
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/message.dart';
 import '../models/solution.dart';
@@ -19,6 +20,7 @@ class ChatProvider extends ChangeNotifier {
   final WasherService _washerService;
   String? _currentWasherCode;
   bool _isSwitchingToHistoricalChat = false;
+  String? _userEmail;
 
   WasherModel? get currentChatWasher {
     if (_chatData.washerCode == null) {
@@ -33,6 +35,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   ChatProvider(this._washerService) {
+    _userEmail = Hive.box('session').get('current_user');
     _chatData = ChatData(washerCode: _washerService.currentWasher?.washerCode);
     _currentWasherCode = _washerService.currentWasher?.washerCode;
     _washerService.addListener(_onWasherChanged);
@@ -54,6 +57,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   bool hasUnsavedChat() {
+    if (_userEmail == null) return false;
     final lastUserMessageIndex = messages.indexWhere((m) => m.role == 'user');
     if (lastUserMessageIndex == -1) {
       return false;
@@ -87,17 +91,18 @@ class ChatProvider extends ChangeNotifier {
   }
 
   void startNewChat() {
+    if (_userEmail == null) return;
     final currentSolutions = _chatData.recentSolutions;
     _chatData = ChatData(
       recentSolutions: currentSolutions,
       washerCode: _washerService.currentWasher?.washerCode,
     );
     notifyListeners();
-    _chatDataService.saveChatData(_chatData);
+    _chatDataService.saveChatData(_userEmail!, _chatData);
   }
 
   Future<void> sendQuestion(String question, {required String pdfId}) async {
-    if (question.isEmpty) return;
+    if (question.isEmpty || _userEmail == null) return;
 
     final userMessage = Message(
       id: const Uuid().v4(),
@@ -142,6 +147,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> expandMessage(Message shortMessage, {required String pdfId}) async {
+     if (_userEmail == null) return;
     _setLoading(true);
 
     try {
@@ -179,6 +185,7 @@ class ChatProvider extends ChangeNotifier {
           flowId: shortMessage.flowId,
         );
         notifyListeners();
+        await _chatDataService.saveChatData(_userEmail!, _chatData);
       }
     } catch (e) {
       addMessage(Message(
@@ -193,7 +200,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> runDiagnosis(String inputText, {required String pdfId}) async {
-    if (inputText.isEmpty) return;
+    if (inputText.isEmpty || _userEmail == null) return;
 
     addMessage(Message(
       id: const Uuid().v4(),
@@ -232,6 +239,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> startFlow(String problem) async {
+    if (_userEmail == null) return;
     final flowId = const Uuid().v4();
     addMessage(Message(
       id: const Uuid().v4(),
@@ -265,6 +273,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> continueFlow(String flowId, String choice) async {
+    if (_userEmail == null) return;
     addMessage(Message(
       id: const Uuid().v4(),
       role: 'user',
@@ -301,21 +310,24 @@ class ChatProvider extends ChangeNotifier {
   }
 
   void addMessage(Message msg) {
+    if (_userEmail == null) return;
     _chatData.messages.insert(0, msg);
     notifyListeners();
-    _chatDataService.saveChatData(_chatData);
+    _chatDataService.saveChatData(_userEmail!, _chatData);
   }
 
   void clearMessages() {
+    if (_userEmail == null) return;
     _chatData.messages.clear();
     notifyListeners();
-    _chatDataService.saveChatData(_chatData);
+    _chatDataService.saveChatData(_userEmail!, _chatData);
   }
 
   Future<void> addSolution({
     required Message answer,
     required String question,
   }) async {
+    if (_userEmail == null) return;
     _chatData.recentSolutions.removeWhere((s) => s.messageId == answer.id);
 
     final title = await _conversationSummaryService.summarizeConversation(
@@ -336,10 +348,11 @@ class ChatProvider extends ChangeNotifier {
 
     _chatData.recentSolutions.insert(0, newSolution);
     notifyListeners();
-    await _chatDataService.saveChatData(_chatData);
+    await _chatDataService.saveChatData(_userEmail!, _chatData);
   }
 
   Future<void> onSolutionSelected(Solution s) async {
+    if (_userEmail == null) return;
     if (messages.any((m) => m.id == s.messageId)) {
       scrollToMessage(s.messageId);
       return;
@@ -347,7 +360,7 @@ class ChatProvider extends ChangeNotifier {
 
     _isSwitchingToHistoricalChat = true;
     try {
-      final allLogs = await _chatDataService.loadAllChatLogs();
+      final allLogs = await _chatDataService.loadAllChatLogs(_userEmail!);
       ChatData? targetLog;
       for (final log in allLogs) {
         if (log.messages.any((m) => m.id == s.messageId)) {
@@ -401,12 +414,14 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> loadInitialChat() async {
-    final lastChat = await _chatDataService.loadLastChat();
-    _chatData = lastChat ?? ChatData();
+    if (_userEmail == null) return;
+    final lastChat = await _chatDataService.loadLastChat(_userEmail!);
+    _chatData = lastChat ?? ChatData(washerCode: _washerService.currentWasher?.washerCode);
     notifyListeners();
   }
 
   Future<List<ChatData>> loadAllChatLogs() {
-    return _chatDataService.loadAllChatLogs();
+    if (_userEmail == null) return Future.value([]);
+    return _chatDataService.loadAllChatLogs(_userEmail!);
   }
 }

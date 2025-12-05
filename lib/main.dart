@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -12,11 +11,10 @@ import 'pages/chatbot_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/login_page.dart';
 import 'providers/theme_provider.dart';
-import 'pages/notes_list_page.dart' hide NoteAdapter, NoteTypeAdapter;
+import 'pages/notes_list_page.dart';
 import 'pages/note_models.dart';
 import 'services/washer_service.dart';
 import 'providers/chat_provider.dart';
-import 'models/chat_data.dart';
 import 'providers/checklist_provider.dart';
 
 final GlobalKey<_MainScreenState> mainScreenKey = GlobalKey<_MainScreenState>();
@@ -39,44 +37,17 @@ void main() async {
       Hive.registerAdapter(NoteTypeAdapter());
     }
 
-    await Hive.openBox<Note>('notesBox_v3');
+    await Hive.openBox('accounts');
+    await Hive.openBox('session');
+    await Hive.openBox('chat_logs');
+    await Hive.openBox('checklists');
+    await Hive.openBox('user_settings');
+
   } catch (e) {
     print('main.dart에서 Hive 초기화 중 치명적인 오류 발생: $e');
   }
 
-  final washerService = WasherService();
-  await washerService.loadInitialWasher();
-
-  washerService.onWasherUpdated = (washer) {
-    final context = mainScreenKey.currentContext;
-    if (context != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            washer != null
-                ? '${washer.washerName}이(가) 내 세탁기로 설정되었습니다.'
-                : '내 세탁기 정보가 삭제되었습니다.',
-          ),
-          backgroundColor: washer != null ? Colors.green : Colors.red,
-        ),
-      );
-    }
-  };
-
-  final chatProvider = ChatProvider(washerService);
-  await chatProvider.loadInitialChat();
-
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider.value(value: washerService),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider.value(value: chatProvider),
-        ChangeNotifierProvider(create: (_) => ChecklistProvider()),
-      ],
-      child: const SmartGuideApp(),
-    ),
-  );
+  runApp(const SmartGuideApp());
 }
 
 class SmartGuideApp extends StatelessWidget {
@@ -84,31 +55,34 @@ class SmartGuideApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          themeMode: themeProvider.themeMode,
-          theme: ThemeData(
-            useMaterial3: true,
-            colorSchemeSeed: Colors.blueAccent,
-            brightness: Brightness.light,
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            colorSchemeSeed: Colors.blueAccent,
-            brightness: Brightness.dark,
-          ),
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            FlutterQuillLocalizations.delegate,
-          ],
-          supportedLocales: const [Locale('ko'), Locale('en')],
-          home: const AuthChecker(),
-        );
-      },
+    return ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            themeMode: themeProvider.themeMode,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorSchemeSeed: Colors.blueAccent,
+              brightness: Brightness.light,
+            ),
+            darkTheme: ThemeData(
+              useMaterial3: true,
+              colorSchemeSeed: Colors.blueAccent,
+              brightness: Brightness.dark,
+            ),
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FlutterQuillLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('ko'), Locale('en')],
+            home: const AuthChecker(),
+          );
+        },
+      ),
     );
   }
 }
@@ -121,38 +95,48 @@ class AuthChecker extends StatefulWidget {
 }
 
 class _AuthCheckerState extends State<AuthChecker> {
-  bool _isLoading = true;
   bool _isLoggedIn = false;
+  final _washerService = WasherService();
 
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
+    _washerService.loadInitialWasher();
+  }
+  
+    @override
+  void dispose() {
+    _washerService.dispose();
+    super.dispose();
   }
 
   Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    final sessionBox = Hive.box('session');
     setState(() {
-      _isLoggedIn = isLoggedIn;
-      _isLoading = false;
+       _isLoggedIn = sessionBox.get('current_user') != null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return _isLoggedIn
-        ? MainScreen(
-            key: mainScreenKey, 
-            onLogout: () {
-              setState(() {
-                _isLoggedIn = false;
-              });
-            },
+        ? MultiProvider(
+            providers: [
+              ChangeNotifierProvider.value(value: _washerService),
+              ChangeNotifierProvider(create: (_) => ChatProvider(_washerService)),
+              ChangeNotifierProvider(create: (_) => ChecklistProvider()),
+            ],
+            child: MainScreen(
+              key: mainScreenKey,
+              onLogout: () {
+                final sessionBox = Hive.box('session');
+                sessionBox.delete('current_user');
+                setState(() {
+                  _isLoggedIn = false;
+                });
+              },
+            ),
           )
         : LoginPage(
             onLoginSuccess: () {
@@ -180,6 +164,13 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // MainScreen이 빌드될 때 ChatProvider의 초기 데이터를 로드합니다.
+    // виджет이 트리에 추가된 후에 Provider를 찾도록 합니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ChatProvider>(context, listen: false).loadInitialChat();
+    });
+    
     _pages = [
       const HomePage(),
       const FindWasherPage(),

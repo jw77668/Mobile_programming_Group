@@ -1,5 +1,6 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_guide/models/message.dart';
 import 'package:smart_guide/models/solution.dart';
@@ -289,6 +290,27 @@ class _ChatbotPageState extends State<ChatbotPage> {
     );
   }
 
+  Future<void> _showZoomTutorialIfFirstTime() async {
+    if (!mounted) return;
+    final settingsBox = Hive.box('user_settings');
+    final sessionBox = Hive.box('session');
+    final currentUser = sessionBox.get('current_user');
+    if (currentUser == null) return;
+
+    final key = 'zoom_tutorial_shown_$currentUser';
+    final hasShown = settingsBox.get(key) ?? false;
+
+    if (!hasShown) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('두 번 탭하면 기본 글자 크기로 돌아갑니다.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      await settingsBox.put(key, true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatProvider = context.watch<ChatProvider>();
@@ -382,6 +404,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
           _fontSize = (_fontSize * _scale).clamp(10.0, 30.0);
           _scale = 1.0;
         });
+        _showZoomTutorialIfFirstTime();
       },
       onDoubleTap: () {
         setState(() {
@@ -517,7 +540,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
             ElevatedButton.icon(
               onPressed: _isGeneratingTitle
                   ? null
-                  : () => _addSolution(message, previousMessage!.content),
+                  : () => _addSolution(message, previousMessage.content),
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),

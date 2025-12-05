@@ -1,14 +1,21 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/chat_data.dart';
 
 class ChatDataService {
-  static const String _logStorageKey = 'chat_logs_json';
+  static const String _boxName = 'chat_logs';
 
-  /// 내부 헬퍼 함수: 저장된 모든 채팅 로그를 불러옵니다.
-  Future<List<ChatData>> _loadAllChats() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_logStorageKey);
+  Future<Box> _getBox() async {
+    if (Hive.isBoxOpen(_boxName)) {
+      return Hive.box(_boxName);
+    }
+    return await Hive.openBox(_boxName);
+  }
+
+  /// 내부 헬퍼 함수: 특정 사용자의 모든 채팅 로그를 불러옵니다.
+  Future<List<ChatData>> _loadAllChats(String userEmail) async {
+    final box = await _getBox();
+    final jsonString = box.get(userEmail) as String?;
     if (jsonString == null || jsonString.isEmpty) {
       return [];
     }
@@ -18,9 +25,9 @@ class ChatDataService {
         .toList();
   }
 
-  /// 특정 채팅 세션을 전체 로그 리스트에 저장(추가 또는 업데이트)합니다.
-  Future<void> saveChatData(ChatData data) async {
-    final allChats = await _loadAllChats();
+  /// 특정 사용자의 채팅 세션을 전체 로그 리스트에 저장(추가 또는 업데이트)합니다.
+  Future<void> saveChatData(String userEmail, ChatData data) async {
+    final allChats = await _loadAllChats(userEmail);
     final index = allChats.indexWhere((chat) => chat.id == data.id);
 
     if (index != -1) {
@@ -31,14 +38,14 @@ class ChatDataService {
       allChats.add(data);
     }
 
-    final prefs = await SharedPreferences.getInstance();
+    final box = await _getBox();
     final jsonString = jsonEncode(allChats.map((chat) => chat.toJson()).toList());
-    await prefs.setString(_logStorageKey, jsonString);
+    await box.put(userEmail, jsonString);
   }
 
-  /// 가장 최근의 채팅 세션을 불러옵니다.
-  Future<ChatData?> loadLastChat() async {
-    final allChats = await _loadAllChats();
+  /// 특정 사용자의 가장 최근 채팅 세션을 불러옵니다.
+  Future<ChatData?> loadLastChat(String userEmail) async {
+    final allChats = await _loadAllChats(userEmail);
     if (allChats.isEmpty) return null;
 
     // 가장 최근에 시작된 순서로 정렬
@@ -46,9 +53,9 @@ class ChatDataService {
     return allChats.first;
   }
 
-  /// 저장된 모든 채팅 로그를 리스트로 불러옵니다. (최신순 정렬)
-  Future<List<ChatData>> loadAllChatLogs() async {
-    final allChats = await _loadAllChats();
+  /// 특정 사용자의 모든 채팅 로그를 리스트로 불러옵니다. (최신순 정렬)
+  Future<List<ChatData>> loadAllChatLogs(String userEmail) async {
+    final allChats = await _loadAllChats(userEmail);
     // 가장 최근에 시작된 순서로 정렬
     allChats.sort((a, b) => b.startTime.compareTo(a.startTime));
     return allChats;

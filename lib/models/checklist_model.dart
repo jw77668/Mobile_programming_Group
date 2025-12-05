@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class ChecklistItem {
   final String id;
   final String title;
@@ -14,4 +12,22 @@ class ChecklistItem {
     this.isDone = false,
     this.reminder,
   });
+
+  factory ChecklistItem.fromJson(Map<String, dynamic> json) => ChecklistItem(
+        id: json['id'],
+        title: json['title'],
+        period: json['period'],
+        isDone: json['isDone'],
+        reminder: json['reminder'] != null
+            ? DateTime.parse(json['reminder'])
+            : null,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'period': period,
+        'isDone': isDone,
+        'reminder': reminder?.toIso8601String(),
+      };
 }

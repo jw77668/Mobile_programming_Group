@@ -1,9 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../providers/theme_provider.dart';
 import 'note_editor_page.dart';
 import 'note_models.dart';
 
@@ -34,9 +30,9 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   Future<Box<Note>> _openUserNotesBox() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userEmail = prefs.getString('user_email');
-    final boxName = 'notesBox_v3_${userEmail ?? 'default_user'}';
+    final sessionBox = Hive.box('session');
+    final userEmail = sessionBox.get('current_user');
+    final boxName = 'notes_${userEmail ?? 'default_user'}';
     return Hive.openBox<Note>(boxName);
   }
 
@@ -191,7 +187,7 @@ class _NoteListPageState extends State<NoteListPage> {
           hintStyle: TextStyle(color: theme.hintColor),
           prefixIcon: Icon(Icons.search, color: theme.hintColor),
           filled: true,
-          fillColor: theme.colorScheme.surfaceVariant,
+          fillColor: theme.colorScheme.surface,
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
