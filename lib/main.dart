@@ -17,7 +17,34 @@ import 'services/washer_service.dart';
 import 'providers/chat_provider.dart';
 import 'providers/checklist_provider.dart';
 
-final GlobalKey<_MainScreenState> mainScreenKey = GlobalKey<_MainScreenState>();
+// Navigation state management
+class NavigationProvider with ChangeNotifier {
+  Widget? _customPage;
+  Widget? get customPage => _customPage;
+
+  int _currentIndex = 0;
+  int get currentIndex => _currentIndex;
+
+  void showCustomPage(Widget page) {
+    _customPage = page;
+    notifyListeners();
+  }
+
+  void hideCustomPage() {
+    if (_customPage != null) {
+      _customPage = null;
+      notifyListeners();
+    }
+  }
+
+  void changeTab(int index) {
+    _currentIndex = index;
+    _customPage = null; // Hide custom page when changing tab
+    notifyListeners();
+  }
+}
+
+// Removed the GlobalKey
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +69,7 @@ void main() async {
     await Hive.openBox('chat_logs');
     await Hive.openBox('checklists');
     await Hive.openBox('user_settings');
-    await Hive.openBox<Note>('notes'); // Open the notes box
+    await Hive.openBox<Note>('notes');
 
   } catch (e) {
     print('main.dart에서 Hive 초기화 중 치명적인 오류 발생: $e');
@@ -106,7 +133,7 @@ class _AuthCheckerState extends State<AuthChecker> {
     _washerService.loadInitialWasher();
   }
   
-    @override
+  @override
   void dispose() {
     _washerService.dispose();
     super.dispose();
@@ -124,12 +151,12 @@ class _AuthCheckerState extends State<AuthChecker> {
     return _isLoggedIn
         ? MultiProvider(
             providers: [
+              ChangeNotifierProvider(create: (_) => NavigationProvider()),
               ChangeNotifierProvider.value(value: _washerService),
               ChangeNotifierProvider(create: (_) => ChatProvider(_washerService)),
               ChangeNotifierProvider(create: (_) => ChecklistProvider()),
             ],
             child: MainScreen(
-              key: mainScreenKey,
               onLogout: () {
                 final sessionBox = Hive.box('session');
                 sessionBox.delete('current_user');
@@ -158,16 +185,12 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
     
-    // MainScreen이 빌드될 때 ChatProvider의 초기 데이터를 로드합니다.
-    // виджет이 트리에 추가된 후에 Provider를 찾도록 합니다.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ChatProvider>(context, listen: false).loadInitialChat();
     });
@@ -197,25 +220,21 @@ class _MainScreenState extends State<MainScreen> {
       ),
       const NoteListPage(),
       SettingsPage(
-        onBackPressed: () => setState(() => _currentIndex = 0),
+        onBackPressed: () => Provider.of<NavigationProvider>(context, listen: false).changeTab(0),
         onLogout: widget.onLogout,
       ),
     ];
   }
 
-  void changeTab(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final navProvider = Provider.of<NavigationProvider>(context);
+
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: navProvider.customPage ?? IndexedStack(index: navProvider.currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        currentIndex: navProvider.currentIndex,
+        onTap: (index) => Provider.of<NavigationProvider>(context, listen: false).changeTab(index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           BottomNavigationBarItem(

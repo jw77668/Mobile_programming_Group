@@ -123,7 +123,7 @@ class _NoteListPageState extends State<NoteListPage> {
               builder: (context, box, _) {
                 final notes = _filterAndSortNotes(box);
                 if (notes.isEmpty && _searchQuery.isEmpty) {
-                  return const Center(child: Text('첫 노트를 작성해보세요.'));
+                  return const Center(child: Text('첫 메모를 작성해보세요.'));
                 }
                 if (notes.isEmpty && _searchQuery.isNotEmpty) {
                   return const Center(child: Text('검색 결과가 없습니다.'));

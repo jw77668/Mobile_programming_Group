@@ -107,7 +107,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
           ),
           ListTile(
             leading: const Icon(Icons.delete),
-            title: const Text('메모 삭제'),
+            title: const Text('노트 삭제'),
             onTap: () {
               Navigator.pop(context); // Close the bottom sheet
               Navigator.pop(context, 'delete'); // Return 'delete' to the previous page
@@ -138,11 +138,13 @@ class _NoteEditPageState extends State<NoteEditPage> {
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
           iconTheme: IconThemeData(color: theme.iconTheme.color),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
-            onPressed: _saveAndReturn,
-          ),
+          automaticallyImplyLeading: false, // 좌측 상단 뒤로가기 버튼 숨기기
           actions: [
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveAndReturn,
+              tooltip: '저장',
+            ),
             IconButton(
               icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
               onPressed: () => _showMenu(context),
