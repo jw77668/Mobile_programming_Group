@@ -23,11 +23,16 @@ class _NoteEditPageState extends State<NoteEditPage> {
   late Note _currentNote;
   bool _isNewNote = false;
 
+  // For change detection
+  late String _initialTitle;
+  late String _initialContentJson;
+
   @override
   void initState() {
     super.initState();
     _isNewNote = widget.note == null;
 
+    Document document;
     if (_isNewNote) {
       _currentNote = Note(
         id: const Uuid().v4(),
@@ -37,34 +42,29 @@ class _NoteEditPageState extends State<NoteEditPage> {
         modifiedDate: DateTime.now(),
       );
       if (widget.initialContent != null) {
-        final document = Document()..insert(0, widget.initialContent);
-        _quillController = QuillController(
-          document: document,
-          selection: const TextSelection.collapsed(offset: 0),
-        );
+        document = Document()..insert(0, widget.initialContent);
       } else {
-        _quillController = QuillController.basic();
+        document = Document();
       }
     } else {
       _currentNote = widget.note!;
       try {
-        final document = _currentNote.content.isNotEmpty
+        document = _currentNote.content.isNotEmpty
             ? Document.fromJson(jsonDecode(_currentNote.content))
             : Document();
-        _quillController = QuillController(
-          document: document,
-          selection: const TextSelection.collapsed(offset: 0),
-        );
       } catch (e) {
-        final document = Document()..insert(0, _currentNote.content);
-        _quillController = QuillController(
-          document: document,
-          selection: const TextSelection.collapsed(offset: 0),
-        );
+        document = Document()..insert(0, _currentNote.content);
       }
     }
 
+    _quillController = QuillController(
+      document: document,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    _initialContentJson = jsonEncode(_quillController.document.toDelta().toJson());
+
     _titleController = TextEditingController(text: _currentNote.title);
+    _initialTitle = _currentNote.title;
   }
 
   @override
@@ -74,11 +74,48 @@ class _NoteEditPageState extends State<NoteEditPage> {
     super.dispose();
   }
 
-  void _saveAndReturn() {
-    _currentNote.title = _titleController.text.trim().isEmpty ? '제목 없음' : _titleController.text;
-    _currentNote.content = jsonEncode(_quillController.document.toDelta().toJson());
-    _currentNote.modifiedDate = DateTime.now();
-    Navigator.pop(context, _currentNote);
+  bool _hasChanges() {
+    final currentTitle = _titleController.text;
+    final currentContentJson = jsonEncode(_quillController.document.toDelta().toJson());
+    return currentTitle != _initialTitle || currentContentJson != _initialContentJson;
+  }
+
+  Future<void> _promptToSaveAndExit() async {
+    if (!_hasChanges()) {
+      if (mounted) Navigator.pop(context);
+      return;
+    }
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('변경 사항을 저장하시겠습니까?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false), // 아니오
+            child: const Text('아니오'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true), // 예
+            child: const Text('예'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSave == null) {
+      // Dialog dismissed, do nothing.
+      return;
+    }
+
+    if (shouldSave) {
+      _currentNote.title = _titleController.text.trim().isEmpty ? '제목 없음' : _titleController.text;
+      _currentNote.content = jsonEncode(_quillController.document.toDelta().toJson());
+      _currentNote.modifiedDate = DateTime.now();
+      if (mounted) Navigator.pop(context, _currentNote);
+    } else {
+      if (mounted) Navigator.pop(context); // Exit without saving
+    }
   }
 
   Future<void> _handleImage(ImageSource source) async {
@@ -124,8 +161,8 @@ class _NoteEditPageState extends State<NoteEditPage> {
     final theme = Theme.of(context);
     return WillPopScope(
       onWillPop: () async {
-        _saveAndReturn();
-        return true;
+        await _promptToSaveAndExit();
+        return false;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -133,16 +170,16 @@ class _NoteEditPageState extends State<NoteEditPage> {
             controller: _titleController,
             style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.bold),
             decoration: const InputDecoration(hintText: '제목을 입력하세요', border: InputBorder.none),
-            onEditingComplete: _saveAndReturn,
+            onEditingComplete: _promptToSaveAndExit,
           ),
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
           iconTheme: IconThemeData(color: theme.iconTheme.color),
-          automaticallyImplyLeading: false, // 좌측 상단 뒤로가기 버튼 숨기기
+          automaticallyImplyLeading: false, 
           actions: [
             IconButton(
               icon: const Icon(Icons.save),
-              onPressed: _saveAndReturn,
+              onPressed: _promptToSaveAndExit,
               tooltip: '저장',
             ),
             IconButton(
