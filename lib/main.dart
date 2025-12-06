@@ -42,6 +42,7 @@ void main() async {
     await Hive.openBox('chat_logs');
     await Hive.openBox('checklists');
     await Hive.openBox('user_settings');
+    await Hive.openBox<Note>('notes'); // Open the notes box
 
   } catch (e) {
     print('main.dart에서 Hive 초기화 중 치명적인 오류 발생: $e');
@@ -173,7 +174,11 @@ class _MainScreenState extends State<MainScreen> {
     
     _pages = [
       const HomePage(),
-      const FindWasherPage(),
+      Consumer<WasherService>(
+        builder: (context, washerService, child) {
+          return FindWasherPage(currentWasher: washerService.currentWasher);
+        },
+      ),
       Consumer<WasherService>(
         builder: (context, washerService, child) {
           return washerService.currentWasher != null

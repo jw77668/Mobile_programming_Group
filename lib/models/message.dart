@@ -6,6 +6,7 @@ class Message {
   final List<int> pages; // 관련된 페이지 번호
   final List<String> options; // 대화형 선택지
   final String? flowId; // 대화형 흐름 ID
+  final Message? replyTo;
 
   // "더 알아보기" 기능을 위한 필드
   final bool isExpandable; // 이 메시지가 확장 가능한지 (짧은 답변인지)
@@ -21,6 +22,7 @@ class Message {
     this.flowId,
     this.isExpandable = false,
     this.isExpanded = false,
+    this.replyTo,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,9 @@ class Message {
       flowId: json['flowId'] as String?,
       isExpandable: json['isExpandable'] as bool? ?? false,
       isExpanded: json['isExpanded'] as bool? ?? false,
+      replyTo: json['replyTo'] != null
+          ? Message.fromJson(json['replyTo'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -49,6 +54,7 @@ class Message {
       'flowId': flowId,
       'isExpandable': isExpandable,
       'isExpanded': isExpanded,
+      'replyTo': replyTo?.toJson(),
     };
   }
 }

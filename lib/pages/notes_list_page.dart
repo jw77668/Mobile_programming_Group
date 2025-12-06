@@ -12,7 +12,7 @@ class NoteListPage extends StatefulWidget {
 }
 
 class _NoteListPageState extends State<NoteListPage> {
-  late final Future<Box<Note>> _notesBoxFuture;
+  late final Box<Note> _notesBox;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   SortOption _sortOption = SortOption.modifiedDateDesc;
@@ -20,20 +20,13 @@ class _NoteListPageState extends State<NoteListPage> {
   @override
   void initState() {
     super.initState();
-    _notesBoxFuture = _openUserNotesBox();
+    _notesBox = Hive.box<Note>('notes');
 
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
       });
     });
-  }
-
-  Future<Box<Note>> _openUserNotesBox() async {
-    final sessionBox = Hive.box('session');
-    final userEmail = sessionBox.get('current_user');
-    final boxName = 'notes_${userEmail ?? 'default_user'}';
-    return Hive.openBox<Note>(boxName);
   }
 
   @override
@@ -71,15 +64,15 @@ class _NoteListPageState extends State<NoteListPage> {
     return filteredNotes;
   }
 
-  Future<void> _navigateToNoteEditor(BuildContext context, Box<Note> box, Note? note) async {
+  Future<void> _navigateToNoteEditor(BuildContext context, Note? note) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NoteEditPage(note: note)),
     );
     if (result is Note) {
-      await box.put(result.id, result);
+      await _notesBox.put(result.id, result);
     } else if (result == 'delete' && note != null) {
-      await box.delete(note.id);
+      await _notesBox.delete(note.id);
     }
   }
 
@@ -125,35 +118,22 @@ class _NoteListPageState extends State<NoteListPage> {
         children: [
           _buildSearchBar(),
           Expanded(
-            child: FutureBuilder<Box<Note>>(
-              future: _notesBoxFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+            child: ValueListenableBuilder<Box<Note>>(
+              valueListenable: _notesBox.listenable(),
+              builder: (context, box, _) {
+                final notes = _filterAndSortNotes(box);
+                if (notes.isEmpty && _searchQuery.isEmpty) {
+                  return const Center(child: Text('첫 노트를 작성해보세요.'));
                 }
-                if (snapshot.hasError) {
-                  return Center(child: Text('오류: ${snapshot.error}'));
+                if (notes.isEmpty && _searchQuery.isNotEmpty) {
+                  return const Center(child: Text('검색 결과가 없습니다.'));
                 }
-
-                final notesBox = snapshot.data!;
-                return ValueListenableBuilder<Box<Note>>(
-                  valueListenable: notesBox.listenable(),
-                  builder: (context, box, _) {
-                    final notes = _filterAndSortNotes(box);
-                    if (notes.isEmpty && _searchQuery.isEmpty) {
-                      return const Center(child: Text('첫 노트를 작성해보세요.'));
-                    }
-                    if (notes.isEmpty && _searchQuery.isNotEmpty) {
-                      return const Center(child: Text('검색 결과가 없습니다.'));
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      itemCount: notes.length,
-                      itemBuilder: (context, index) {
-                        final note = notes[index];
-                        return _buildNoteItem(context, note, box);
-                      },
-                    );
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: notes.length,
+                  itemBuilder: (context, index) {
+                    final note = notes[index];
+                    return _buildNoteItem(context, note, box);
                   },
                 );
               },
@@ -162,9 +142,8 @@ class _NoteListPageState extends State<NoteListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            final box = await _notesBoxFuture;
-            _navigateToNoteEditor(context, box, null);
+          onPressed: () {
+            _navigateToNoteEditor(context, null);
           },
           backgroundColor: Colors.lightBlue[200],
           shape: RoundedRectangleBorder(
@@ -215,7 +194,7 @@ class _NoteListPageState extends State<NoteListPage> {
         side: BorderSide(color: theme.dividerColor, width: 1),
       ),
       child: ListTile(
-        onTap: () => _navigateToNoteEditor(context, box, note),
+        onTap: () => _navigateToNoteEditor(context, note),
         title: Text(
           note.title,
           style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.bold, fontSize: 16),
@@ -254,7 +233,7 @@ class _NoteListPageState extends State<NoteListPage> {
             ),
             IconButton(
               icon: Icon(Icons.edit, color: theme.iconTheme.color, size: 20),
-              onPressed: () => _navigateToNoteEditor(context, box, note),
+              onPressed: () => _navigateToNoteEditor(context, note),
             ),
             IconButton(
               icon: Icon(Icons.delete, color: theme.colorScheme.error, size: 20),

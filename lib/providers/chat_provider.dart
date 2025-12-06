@@ -101,7 +101,7 @@ class ChatProvider extends ChangeNotifier {
     _chatDataService.saveChatData(_userEmail!, _chatData);
   }
 
-  Future<void> sendQuestion(String question, {required String pdfId}) async {
+  Future<void> sendQuestion(String question, {required String pdfId, Message? replyTo}) async {
     if (question.isEmpty || _userEmail == null) return;
 
     final userMessage = Message(
@@ -109,29 +109,41 @@ class ChatProvider extends ChangeNotifier {
       role: 'user',
       content: question,
       createdAt: DateTime.now(),
+      replyTo: replyTo,
     );
     addMessage(userMessage);
 
     _setLoading(true);
 
     try {
-      List<Message> contextMessages = _chatData.messages.reversed.toList();
+      final bool isShortMode = replyTo == null;
+      List<Message> contextMessages;
+
+      if (replyTo != null) {
+        final replyToIndex = messages.indexWhere((m) => m.id == replyTo.id);
+        if (replyToIndex != -1) {
+          contextMessages = messages.sublist(replyToIndex);
+        } else {
+          contextMessages = messages.sublist(1);
+        }
+      } else {
+        contextMessages = messages.sublist(1);
+      }
 
       final ragResponse = await _ragService.search(
         question,
         pdfId: pdfId,
-        previousMessages: contextMessages,
-        shortMode: true,
+        previousMessages: contextMessages.reversed.toList(),
+        shortMode: isShortMode,
       );
 
       final botMessage = Message(
-        id: const Uuid().v4(),
-        role: 'assistant',
-        content: ragResponse.answer,
-        pages: ragResponse.pages,
-        createdAt: DateTime.now(),
-        isExpandable: true,
-      );
+          id: const Uuid().v4(),
+          role: 'assistant',
+          content: ragResponse.answer,
+          pages: ragResponse.pages,
+          createdAt: DateTime.now(),
+          isExpandable: isShortMode);
       addMessage(botMessage);
     } catch (e) {
       final errorMessage = Message(
@@ -147,27 +159,40 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> expandMessage(Message shortMessage, {required String pdfId}) async {
-     if (_userEmail == null) return;
+    if (_userEmail == null) return;
     _setLoading(true);
 
     try {
       final assistantMessageIndex =
           messages.indexWhere((m) => m.id == shortMessage.id);
-      if (assistantMessageIndex < 0 ||
-          assistantMessageIndex + 1 >= messages.length) {
+      if (assistantMessageIndex == -1) {
+        throw Exception("Original message not found.");
+      }
+
+      Message? userMessage;
+      int userMessageIndex = -1;
+
+      for (var i = assistantMessageIndex + 1; i < messages.length; i++) {
+        if (messages[i].role == 'user') {
+          userMessage = messages[i];
+          userMessageIndex = i;
+          break;
+        }
+      }
+
+      if (userMessage == null || userMessageIndex == -1) {
         throw Exception("Original question not found for this message.");
       }
-      final userMessage = messages[assistantMessageIndex + 1];
-      if (userMessage.role != 'user') {
-        throw Exception(
-            "Message before assistant's answer is not a user message.");
-      }
       final originalQuestion = userMessage.content;
+
+      final contextMessages = (userMessageIndex + 1 < messages.length)
+          ? messages.sublist(userMessageIndex + 1)
+          : <Message>[];
 
       final ragResponse = await _ragService.search(
         originalQuestion,
         pdfId: pdfId,
-        previousMessages: messages.reversed.toList(),
+        previousMessages: contextMessages.reversed.toList(),
         shortMode: false,
       );
 
@@ -179,10 +204,11 @@ class ChatProvider extends ChangeNotifier {
           content: ragResponse.answer,
           pages: ragResponse.pages,
           createdAt: shortMessage.createdAt,
-          isExpandable: true,
+          isExpandable: false, // It has been expanded
           isExpanded: true,
           options: shortMessage.options,
           flowId: shortMessage.flowId,
+          replyTo: shortMessage.replyTo,
         );
         notifyListeners();
         await _chatDataService.saveChatData(_userEmail!, _chatData);

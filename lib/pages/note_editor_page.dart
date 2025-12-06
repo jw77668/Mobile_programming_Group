@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'note_models.dart';
 import 'package:hive/hive.dart';
@@ -10,8 +9,9 @@ part 'note_editor_page.g.dart';
 
 class NoteEditPage extends StatefulWidget {
   final Note? note;
+  final String? initialContent;
 
-  const NoteEditPage({super.key, required this.note});
+  const NoteEditPage({super.key, this.note, this.initialContent});
 
   @override
   State<NoteEditPage> createState() => _NoteEditPageState();
@@ -36,7 +36,15 @@ class _NoteEditPageState extends State<NoteEditPage> {
         createdDate: DateTime.now(),
         modifiedDate: DateTime.now(),
       );
-      _quillController = QuillController.basic();
+      if (widget.initialContent != null) {
+        final document = Document()..insert(0, widget.initialContent);
+        _quillController = QuillController(
+          document: document,
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      } else {
+        _quillController = QuillController.basic();
+      }
     } else {
       _currentNote = widget.note!;
       try {
@@ -114,191 +122,197 @@ class _NoteEditPageState extends State<NoteEditPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _titleController,
-          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.bold),
-          decoration: const InputDecoration(hintText: '제목을 입력하세요', border: InputBorder.none),
-          onEditingComplete: _saveAndReturn,
-        ),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: theme.iconTheme.color),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
-          onPressed: _saveAndReturn,
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
-            onPressed: () => _showMenu(context),
+    return WillPopScope(
+      onWillPop: () async {
+        _saveAndReturn();
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: TextField(
+            controller: _titleController,
+            style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.bold),
+            decoration: const InputDecoration(hintText: '제목을 입력하세요', border: InputBorder.none),
+            onEditingComplete: _saveAndReturn,
           ),
-        ],
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          elevation: 0,
+          iconTheme: IconThemeData(color: theme.iconTheme.color),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
+            onPressed: _saveAndReturn,
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+              onPressed: () => _showMenu(context),
+            ),
+          ],
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
 
-            child: SingleChildScrollView(
+              child: SingleChildScrollView(
 
-              scrollDirection: Axis.horizontal,
+                scrollDirection: Axis.horizontal,
 
-              child: Row(
+                child: Row(
 
-                children: [
+                  children: [
 
 // 실행 취소 (Undo)
 
-                  QuillToolbarHistoryButton(
+                    QuillToolbarHistoryButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    isUndo: true,
+                      isUndo: true,
 
-                  ),
+                    ),
 
-                  QuillToolbarHistoryButton(
+                    QuillToolbarHistoryButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    isUndo: false,
+                      isUndo: false,
 
-                  ),
+                    ),
 
-                  const SizedBox(width: 8),
+                    const SizedBox(width: 8),
 
 
 
-                  const SizedBox(width: 8, height: 20, child: VerticalDivider()),
+                    const SizedBox(width: 8, height: 20, child: VerticalDivider()),
 
 
 
 // 텍스트 스타일
 
-                  QuillToolbarToggleStyleButton(
+                    QuillToolbarToggleStyleButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    attribute: Attribute.bold,
+                      attribute: Attribute.bold,
 
-                  ),
+                    ),
 
-                  QuillToolbarToggleStyleButton(
+                    QuillToolbarToggleStyleButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    attribute: Attribute.italic,
+                      attribute: Attribute.italic,
 
-                  ),
+                    ),
 
-                  QuillToolbarToggleStyleButton(
+                    QuillToolbarToggleStyleButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    attribute: Attribute.underline,
+                      attribute: Attribute.underline,
 
-                  ),
+                    ),
 
-                  QuillToolbarToggleStyleButton(
+                    QuillToolbarToggleStyleButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    attribute: Attribute.strikeThrough,
+                      attribute: Attribute.strikeThrough,
 
-                  ),
+                    ),
 
 
 
-                  const SizedBox(width: 8, height: 20, child: VerticalDivider()),
+                    const SizedBox(width: 8, height: 20, child: VerticalDivider()),
 
 
 
 // 색상 및 서식 지우기
 
-                  QuillToolbarColorButton(
+                    QuillToolbarColorButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    isBackground: false,
+                      isBackground: false,
 
-                  ),
+                    ),
 
-                  QuillToolbarClearFormatButton(
+                    QuillToolbarClearFormatButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                  ),
+                    ),
 
 
 
-                  const SizedBox(width: 8, height: 20, child: VerticalDivider()),
+                    const SizedBox(width: 8, height: 20, child: VerticalDivider()),
 
 
 
 // [그룹 5] 리스트
 
-                  QuillToolbarToggleStyleButton(
+                    QuillToolbarToggleStyleButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    attribute: Attribute.ol,
+                      attribute: Attribute.ol,
 
-                  ),
+                    ),
 
-                  QuillToolbarToggleStyleButton(
+                    QuillToolbarToggleStyleButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                    attribute: Attribute.ul,
+                      attribute: Attribute.ul,
 
-                  ),
+                    ),
 
 
 
-                  const SizedBox(width: 8, height: 20, child: VerticalDivider()),
+                    const SizedBox(width: 8, height: 20, child: VerticalDivider()),
 
 
 
 // [그룹 6] 검색
 
-                  QuillToolbarSearchButton(
+                    QuillToolbarSearchButton(
 
-                    controller: _quillController,
+                      controller: _quillController,
 
-                  ),
+                    ),
 
-                ],
+                  ],
+
+                ),
 
               ),
 
             ),
 
-          ),
-
-          const Divider(height: 1, thickness: 1, color: Colors.grey),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(
-              '수정됨: ${_currentNote.dateString}',
-              style: TextStyle(fontSize: 15, height: 1.5, color: theme.textTheme.bodyLarge?.color),
+            const Divider(height: 1, thickness: 1, color: Colors.grey),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                '수정됨: ${_currentNote.dateString}',
+                style: TextStyle(fontSize: 15, height: 1.5, color: theme.textTheme.bodyLarge?.color),
+              ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: QuillEditor.basic(
-                controller: _quillController,
-                config: const QuillEditorConfig(
-                  padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: QuillEditor.basic(
+                  controller: _quillController,
+                  config: const QuillEditorConfig(
+                    padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        backgroundColor: theme.scaffoldBackgroundColor,
       ),
-      backgroundColor: theme.scaffoldBackgroundColor,
     );
   }
 }

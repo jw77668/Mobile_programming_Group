@@ -18,13 +18,6 @@ import '../widgets/washer_checklist.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  Future<void> _navigateToFindWasher(BuildContext context) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const FindWasherPage()),
-    );
-  }
-
   void _navigateToNoteList(BuildContext context) {
     Navigator.push(
       context,
@@ -54,21 +47,21 @@ class HomePage extends StatelessWidget {
           children: [
             _buildSearchCard(context, myWasher),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '내 제품'),
+            _buildSectionHeader(context, '내 제품', myWasher),
             const SizedBox(height: 12),
             _buildProductList(context, myWasher),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '자주 묻는 질문'),
+            _buildSectionHeader(context, '자주 묻는 질문', null),
             const SizedBox(height: 12),
             _buildFaqChips(context),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '최근 해결 기록'),
+            _buildSectionHeader(context, '최근 해결 기록', null),
             const SizedBox(height: 12),
             _buildRecentHistory(context),
             const SizedBox(height: 24),
             const WasherChecklist(),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '내 메모'),
+            _buildSectionHeader(context, '내 메모', null),
             const SizedBox(height: 12),
             _buildMemoSection(context),
           ],
@@ -149,7 +142,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(BuildContext context, String title, WasherModel? myWasher) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,7 +153,7 @@ class HomePage extends StatelessWidget {
         ),
         if (title == '내 제품')
           TextButton(
-            onPressed: () => _navigateToFindWasher(context),
+            onPressed: () => mainScreenKey.currentState?.changeTab(1),
             style: TextButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
@@ -205,7 +198,7 @@ class HomePage extends StatelessWidget {
     return InkWell(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const ManualViewerPage()),
+        MaterialPageRoute(builder: (context) => ManualViewerPage(washer: washer)),
       ),
       borderRadius: BorderRadius.circular(12),
       child: Card(
