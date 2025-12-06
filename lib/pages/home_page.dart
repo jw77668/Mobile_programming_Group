@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_guide/main.dart';
 import '../services/washer_service.dart';
-import 'find_washer.dart';
 import 'manual_viewer_page.dart';
 import '../models/washer_model.dart';
-import 'chatbot_page.dart';
 import 'notes_list_page.dart';
 import 'FAQ/filter_clean.dart';
 import 'FAQ/noise.dart';
@@ -29,6 +27,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final myWasher = Provider.of<WasherService>(context).currentWasher;
     final theme = Theme.of(context);
+    final navProvider = Provider.of<NavigationProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -47,21 +46,23 @@ class HomePage extends StatelessWidget {
           children: [
             _buildSearchCard(context, myWasher),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '내 제품', myWasher),
+            _buildSectionHeader(context, '내 제품', myWasher, navProvider),
             const SizedBox(height: 12),
             _buildProductList(context, myWasher),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '자주 묻는 질문', null),
+            _buildSectionHeader(context, '자주 묻는 질문', null, navProvider),
             const SizedBox(height: 12),
-            _buildFaqChips(context),
+            _buildFaqChips(context, navProvider),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '최근 해결 기록', null),
+            _buildSectionHeader(context, '최근 해결 기록', null, navProvider),
             const SizedBox(height: 12),
-            _buildRecentHistory(context),
+            _buildRecentHistory(context, navProvider),
             const SizedBox(height: 24),
+            _buildSectionHeader(context, '할 일', null, navProvider),
+            const SizedBox(height: 12),
             const WasherChecklist(),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, '내 메모', null),
+            _buildSectionHeader(context, '메모', null, navProvider),
             const SizedBox(height: 12),
             _buildMemoSection(context),
           ],
@@ -87,7 +88,7 @@ class HomePage extends StatelessWidget {
           child: ListTile(
             leading: Icon(Icons.note_alt, color: theme.colorScheme.primary, size: 28),
             title: const Text(
-              '메모 리스트',
+              '노트 목록',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             trailing: Icon(
@@ -103,10 +104,11 @@ class HomePage extends StatelessWidget {
 
   Widget _buildSearchCard(BuildContext context, WasherModel? myWasher) {
     final theme = Theme.of(context);
+    final navProvider = Provider.of<NavigationProvider>(context, listen: false);
     return InkWell(
       onTap: () {
         if (myWasher != null) {
-          mainScreenKey.currentState?.changeTab(2);
+          navProvider.changeTab(2);
         } else {
           ScaffoldMessenger.of(
             context,
@@ -142,7 +144,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, WasherModel? myWasher) {
+  Widget _buildSectionHeader(BuildContext context, String title, WasherModel? myWasher, NavigationProvider navProvider) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,7 +155,7 @@ class HomePage extends StatelessWidget {
         ),
         if (title == '내 제품')
           TextButton(
-            onPressed: () => mainScreenKey.currentState?.changeTab(1),
+            onPressed: () => navProvider.changeTab(1),
             style: TextButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
@@ -251,25 +253,25 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqChips(BuildContext context) {
+  Widget _buildFaqChips(BuildContext context, NavigationProvider navProvider) {
     return Wrap(
       spacing: 8.0,
       runSpacing: 4.0,
       children: [
-        _buildFaqChip(context, '필터 청소하기', const FilterCleanFAQ()),
-        _buildFaqChip(context, '소음이 심해요', const NoiseFAQ()),
-        _buildFaqChip(context, '악취가 나요', const BadSmellFAQ()),
-        _buildFaqChip(context, '전원이 안 켜져요', const PowerOffFAQ()),
+        _buildFaqChip(context, '필터 청소하기', const FilterCleanFAQ(), navProvider),
+        _buildFaqChip(context, '소음이 심해요', const NoiseFAQ(), navProvider),
+        _buildFaqChip(context, '악취가 나요', const BadSmellFAQ(), navProvider),
+        _buildFaqChip(context, '전원이 안 켜져요', const PowerOffFAQ(), navProvider),
       ],
     );
   }
 
-  Widget _buildFaqChip(BuildContext context, String label, Widget page) {
+  Widget _buildFaqChip(BuildContext context, String label, Widget page, NavigationProvider navProvider) {
     final theme = Theme.of(context);
     return ActionChip(
       label: Text(label),
       onPressed: () {
-        mainScreenKey.currentState?.showCustomPage(page);
+        navProvider.showCustomPage(page);
       },
       backgroundColor: theme.colorScheme.surfaceVariant,
       shape: RoundedRectangleBorder(
@@ -279,12 +281,12 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentHistory(BuildContext context) {
+  Widget _buildRecentHistory(BuildContext context, NavigationProvider navProvider) {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     return RecentSolutionsHome(
       onSolutionTap: (solution) async {
         await chatProvider.onSolutionSelected(solution);
-        mainScreenKey.currentState?.changeTab(2);
+        navProvider.changeTab(2);
       },
     );
   }

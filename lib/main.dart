@@ -17,7 +17,34 @@ import 'services/washer_service.dart';
 import 'providers/chat_provider.dart';
 import 'providers/checklist_provider.dart';
 
-final GlobalKey<_MainScreenState> mainScreenKey = GlobalKey<_MainScreenState>();
+// Navigation state management
+class NavigationProvider with ChangeNotifier {
+  Widget? _customPage;
+  Widget? get customPage => _customPage;
+
+  int _currentIndex = 0;
+  int get currentIndex => _currentIndex;
+
+  void showCustomPage(Widget page) {
+    _customPage = page;
+    notifyListeners();
+  }
+
+  void hideCustomPage() {
+    if (_customPage != null) {
+      _customPage = null;
+      notifyListeners();
+    }
+  }
+
+  void changeTab(int index) {
+    _currentIndex = index;
+    _customPage = null; // Hide custom page when changing tab
+    notifyListeners();
+  }
+}
+
+// Removed the GlobalKey
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +69,7 @@ void main() async {
     await Hive.openBox('chat_logs');
     await Hive.openBox('checklists');
     await Hive.openBox('user_settings');
-    await Hive.openBox<Note>('notes'); // Open the notes box
+    await Hive.openBox<Note>('notes');
 
   } catch (e) {
     print('main.dart에서 Hive 초기화 중 치명적인 오류 발생: $e');
@@ -106,7 +133,7 @@ class _AuthCheckerState extends State<AuthChecker> {
     _washerService.loadInitialWasher();
   }
   
-    @override
+  @override
   void dispose() {
     _washerService.dispose();
     super.dispose();
@@ -124,12 +151,12 @@ class _AuthCheckerState extends State<AuthChecker> {
     return _isLoggedIn
         ? MultiProvider(
             providers: [
+              ChangeNotifierProvider(create: (_) => NavigationProvider()),
               ChangeNotifierProvider.value(value: _washerService),
               ChangeNotifierProvider(create: (_) => ChatProvider(_washerService)),
               ChangeNotifierProvider(create: (_) => ChecklistProvider()),
             ],
             child: MainScreen(
-              key: mainScreenKey,
               onLogout: () {
                 final sessionBox = Hive.box('session');
                 sessionBox.delete('current_user');
@@ -158,9 +185,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-  Widget? _customPage;
-
   late final List<Widget> _pages;
 
   @override
@@ -172,7 +196,7 @@ class _MainScreenState extends State<MainScreen> {
     });
     
     _pages = [
-      HomePage(key: UniqueKey()), // Add UniqueKey to force rebuild
+      const HomePage(),
       Consumer<WasherService>(
         builder: (context, washerService, child) {
           return FindWasherPage(currentWasher: washerService.currentWasher);
@@ -196,38 +220,21 @@ class _MainScreenState extends State<MainScreen> {
       ),
       const NoteListPage(),
       SettingsPage(
-        onBackPressed: () => setState(() => _currentIndex = 0),
+        onBackPressed: () => Provider.of<NavigationProvider>(context, listen: false).changeTab(0),
         onLogout: widget.onLogout,
       ),
     ];
   }
 
-  void changeTab(int index) {
-    setState(() {
-      _currentIndex = index;
-      _customPage = null; // When tab changes, hide custom page
-    });
-  }
-
-  void showCustomPage(Widget page) {
-    setState(() {
-      _customPage = page;
-    });
-  }
-
-  void hideCustomPage() {
-    setState(() {
-      _customPage = null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final navProvider = Provider.of<NavigationProvider>(context);
+
     return Scaffold(
-      body: _customPage ?? IndexedStack(index: _currentIndex, children: _pages),
+      body: navProvider.customPage ?? IndexedStack(index: navProvider.currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: changeTab,
+        currentIndex: navProvider.currentIndex,
+        onTap: (index) => Provider.of<NavigationProvider>(context, listen: false).changeTab(index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           BottomNavigationBarItem(
