@@ -20,15 +20,7 @@ class FAQPage extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const HomePage()),
-            );
-          },
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           question,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),

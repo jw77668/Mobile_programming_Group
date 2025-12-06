@@ -159,6 +159,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  Widget? _customPage;
 
   late final List<Widget> _pages;
 
@@ -166,14 +167,12 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     
-    // MainScreen이 빌드될 때 ChatProvider의 초기 데이터를 로드합니다.
-    // виджет이 트리에 추가된 후에 Provider를 찾도록 합니다.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ChatProvider>(context, listen: false).loadInitialChat();
     });
     
     _pages = [
-      const HomePage(),
+      HomePage(key: UniqueKey()), // Add UniqueKey to force rebuild
       Consumer<WasherService>(
         builder: (context, washerService, child) {
           return FindWasherPage(currentWasher: washerService.currentWasher);
@@ -206,16 +205,29 @@ class _MainScreenState extends State<MainScreen> {
   void changeTab(int index) {
     setState(() {
       _currentIndex = index;
+      _customPage = null; // When tab changes, hide custom page
+    });
+  }
+
+  void showCustomPage(Widget page) {
+    setState(() {
+      _customPage = page;
+    });
+  }
+
+  void hideCustomPage() {
+    setState(() {
+      _customPage = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: _customPage ?? IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: changeTab,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           BottomNavigationBarItem(

@@ -268,10 +268,9 @@ class HomePage extends StatelessWidget {
     final theme = Theme.of(context);
     return ActionChip(
       label: Text(label),
-      onPressed: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => page),
-      ),
+      onPressed: () {
+        mainScreenKey.currentState?.showCustomPage(page);
+      },
       backgroundColor: theme.colorScheme.surfaceVariant,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),

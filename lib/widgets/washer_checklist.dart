@@ -70,12 +70,56 @@ class _WasherChecklistState extends State<WasherChecklist> {
     );
   }
 
+  void _showAddItemDialog(BuildContext context, String period) {
+    final TextEditingController controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('새 항목 추가 ($period)'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: '항목 이름'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final String title = controller.text;
+                if (title.isNotEmpty) {
+                  await Provider.of<ChecklistProvider>(context, listen: false)
+                      .addItem(title, period);
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+              child: const Text('추가'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildChecklistSection(BuildContext context, String title, List<ChecklistItem> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showAddItemDialog(context, title),
+            )
+          ],
+        ),
         ...items.map((item) => _buildChecklistItem(context, item)).toList(),
       ],
     );
@@ -84,13 +128,13 @@ class _WasherChecklistState extends State<WasherChecklist> {
   Widget _buildChecklistItem(BuildContext context, ChecklistItem item) {
     final theme = Theme.of(context);
     return InkWell(
-      onTap: () {
-        Provider.of<ChecklistProvider>(context, listen: false).toggleItem(item.id);
+      onTap: () async {
+        await Provider.of<ChecklistProvider>(context, listen: false).toggleItem(item.id);
       },
       child: Row(
         children: [
-          Checkbox(value: item.isDone, onChanged: (value) {
-            Provider.of<ChecklistProvider>(context, listen: false).toggleItem(item.id);
+          Checkbox(value: item.isDone, onChanged: (value) async {
+            await Provider.of<ChecklistProvider>(context, listen: false).toggleItem(item.id);
           }),
           Expanded(child: Text(item.title)),
           if (item.period == '매월')
@@ -102,15 +146,15 @@ class _WasherChecklistState extends State<WasherChecklist> {
                     item.reminder != null ? Icons.notifications_active : Icons.notifications_on_outlined,
                     color: item.reminder != null ? theme.colorScheme.primary : theme.hintColor,
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     final provider = Provider.of<ChecklistProvider>(context, listen: false);
                     if (item.reminder != null) {
-                      provider.cancelReminder(item.id);
+                      await provider.cancelReminder(item.id);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('알림이 해제되었습니다.')),
                       );
                     } else {
-                      provider.setReminder(item.id, const Duration(days: 30));
+                      await provider.setReminder(item.id, const Duration(days: 30));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('한 달 후에 알림이 설정되었습니다.')),
                       );
@@ -147,6 +191,13 @@ class _WasherChecklistState extends State<WasherChecklist> {
                 ),
               ],
             ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.grey),
+            onPressed: () async {
+              await Provider.of<ChecklistProvider>(context, listen: false).deleteItem(item.id);
+            },
+            tooltip: '삭제',
+          ),
         ],
       ),
     );

@@ -24,23 +24,21 @@ class ChecklistProvider with ChangeNotifier {
       final List<dynamic> jsonList = jsonDecode(data);
       _items = jsonList.map((json) => ChecklistItem.fromJson(json)).toList();
     } else {
-      _createTemplateItems();
+      await _createTemplateItems();
     }
     notifyListeners();
   }
 
-  void _createTemplateItems() {
+  Future<void> _createTemplateItems() async {
     _items = [
-      // 매주
       ChecklistItem(id: _uuid.v4(), title: '세탁기 문 열어두기', period: '매주'),
       ChecklistItem(id: _uuid.v4(), title: '세제 투입구 물기 닦기', period: '매주'),
-      // 매월
       ChecklistItem(id: _uuid.v4(), title: '세제 투입구 분리하여 물청소하기', period: '매월'),
       ChecklistItem(id: _uuid.v4(), title: '도어 고무패킹(가스켓) 닦기', period: '매월'),
       ChecklistItem(id: _uuid.v4(), title: '거름망(배수 필터) 청소하기', period: '매월'),
       ChecklistItem(id: _uuid.v4(), title: '세탁조 클리너로 통세척 코스 돌리기', period: '매월'),
     ];
-    _saveItems();
+    await _saveItems();
   }
 
   Future<void> _saveItems() async {
@@ -49,24 +47,68 @@ class ChecklistProvider with ChangeNotifier {
     await _box.put(_userEmail, jsonString);
   }
 
-  void toggleItem(String id) {
-    final item = _items.firstWhere((item) => item.id == id);
-    item.isDone = !item.isDone;
-    _saveItems();
+  Future<void> addItem(String title, String period) async {
+    final newItem = ChecklistItem(
+      id: _uuid.v4(),
+      title: title,
+      period: period,
+    );
+    _items = [..._items, newItem];
+    await _saveItems();
     notifyListeners();
   }
 
-  void setReminder(String id, Duration duration) {
-    final item = _items.firstWhere((item) => item.id == id);
-    item.reminder = DateTime.now().add(duration);
-    _saveItems();
+  Future<void> deleteItem(String id) async {
+    _items = _items.where((item) => item.id != id).toList();
+    await _saveItems();
     notifyListeners();
   }
 
-  void cancelReminder(String id) {
-    final item = _items.firstWhere((item) => item.id == id);
-    item.reminder = null;
-    _saveItems();
+  Future<void> toggleItem(String id) async {
+    _items = _items.map((item) {
+      if (item.id == id) {
+        return ChecklistItem(
+            id: item.id,
+            title: item.title,
+            period: item.period,
+            isDone: !item.isDone,
+            reminder: item.reminder);
+      }
+      return item;
+    }).toList();
+    await _saveItems();
+    notifyListeners();
+  }
+
+  Future<void> setReminder(String id, Duration duration) async {
+    _items = _items.map((item) {
+      if (item.id == id) {
+        return ChecklistItem(
+            id: item.id,
+            title: item.title,
+            period: item.period,
+            isDone: item.isDone,
+            reminder: DateTime.now().add(duration));
+      }
+      return item;
+    }).toList();
+    await _saveItems();
+    notifyListeners();
+  }
+
+  Future<void> cancelReminder(String id) async {
+    _items = _items.map((item) {
+      if (item.id == id) {
+        return ChecklistItem(
+            id: item.id,
+            title: item.title,
+            period: item.period,
+            isDone: item.isDone,
+            reminder: null);
+      }
+      return item;
+    }).toList();
+    await _saveItems();
     notifyListeners();
   }
 }
