@@ -69,7 +69,6 @@ void main() async {
     await Hive.openBox('chat_logs');
     await Hive.openBox('checklists');
     await Hive.openBox('user_settings');
-    await Hive.openBox<Note>('notes');
 
   } catch (e) {
     print('main.dart에서 Hive 초기화 중 치명적인 오류 발생: $e');

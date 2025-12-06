@@ -12,7 +12,9 @@ class NoteListPage extends StatefulWidget {
 }
 
 class _NoteListPageState extends State<NoteListPage> {
-  late final Box<Note> _notesBox;
+  Box<Note>? _notesBox;
+  Future<void>? _initNotesFuture;
+
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   SortOption _sortOption = SortOption.modifiedDateDesc;
@@ -20,13 +22,20 @@ class _NoteListPageState extends State<NoteListPage> {
   @override
   void initState() {
     super.initState();
-    _notesBox = Hive.box<Note>('notes');
+    _initNotesFuture = _initNotes();
 
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
       });
     });
+  }
+
+  Future<void> _initNotes() async {
+    final sessionBox = Hive.box('session');
+    final userEmail = sessionBox.get('current_user') as String?;
+    final boxName = userEmail != null ? 'notes_$userEmail' : 'notes_default';
+    _notesBox = await Hive.openBox<Note>(boxName);
   }
 
   @override
@@ -65,14 +74,16 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   Future<void> _navigateToNoteEditor(BuildContext context, Note? note) async {
+    if (_notesBox == null) return;
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NoteEditPage(note: note)),
     );
+    if (!mounted) return;
     if (result is Note) {
-      await _notesBox.put(result.id, result);
+      await _notesBox!.put(result.id, result);
     } else if (result == 'delete' && note != null) {
-      await _notesBox.delete(note.id);
+      await _notesBox!.delete(note.id);
     }
   }
 
@@ -114,32 +125,46 @@ class _NoteListPageState extends State<NoteListPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          Expanded(
-            child: ValueListenableBuilder<Box<Note>>(
-              valueListenable: _notesBox.listenable(),
-              builder: (context, box, _) {
-                final notes = _filterAndSortNotes(box);
-                if (notes.isEmpty && _searchQuery.isEmpty) {
-                  return const Center(child: Text('첫 메모를 작성해보세요.'));
-                }
-                if (notes.isEmpty && _searchQuery.isNotEmpty) {
-                  return const Center(child: Text('검색 결과가 없습니다.'));
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount: notes.length,
-                  itemBuilder: (context, index) {
-                    final note = notes[index];
-                    return _buildNoteItem(context, note, box);
+      body: FutureBuilder(
+        future: _initNotesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || _notesBox == null) {
+            return const Center(child: Text('노트를 불러오는데 실패했습니다.'));
+          }
+          
+          final notesBox = _notesBox!;
+
+          return Column(
+            children: [
+              _buildSearchBar(),
+              Expanded(
+                child: ValueListenableBuilder<Box<Note>>(
+                  valueListenable: notesBox.listenable(),
+                  builder: (context, box, _) {
+                    final notes = _filterAndSortNotes(box);
+                    if (notes.isEmpty && _searchQuery.isEmpty) {
+                      return const Center(child: Text('첫 메모를 작성해보세요.'));
+                    }
+                    if (notes.isEmpty && _searchQuery.isNotEmpty) {
+                      return const Center(child: Text('검색 결과가 없습니다.'));
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      itemCount: notes.length,
+                      itemBuilder: (context, index) {
+                        final note = notes[index];
+                        return _buildNoteItem(context, note, box);
+                      },
+                    );
                   },
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
