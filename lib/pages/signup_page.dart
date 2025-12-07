@@ -15,6 +15,8 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _passwordConfirmController =
       TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _dobController =
+      TextEditingController(); // YYMMDD
   bool _agreeToTerms = false;
   bool _obscurePassword = true;
   bool _obscurePasswordConfirm = true;
@@ -25,6 +27,7 @@ class _SignupPageState extends State<SignupPage> {
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     _nameController.dispose();
+    _dobController.dispose();
     super.dispose();
   }
 
@@ -33,11 +36,13 @@ class _SignupPageState extends State<SignupPage> {
     final password = _passwordController.text.trim();
     final passwordConfirm = _passwordConfirmController.text.trim();
     final name = _nameController.text.trim();
+    final dob = _dobController.text.trim();
 
     if (email.isEmpty ||
         password.isEmpty ||
         passwordConfirm.isEmpty ||
-        name.isEmpty) {
+        name.isEmpty ||
+        dob.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('모든 항목을 입력해주세요')));
@@ -55,6 +60,13 @@ class _SignupPageState extends State<SignupPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('올바른 이메일 형식을 입력해주세요')));
+      return;
+    }
+
+    if (!_isValidDob(dob)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('생년월일은 YYMMDD 6자리로 입력해주세요')));
       return;
     }
 
@@ -85,6 +97,7 @@ class _SignupPageState extends State<SignupPage> {
     await accountsBox.put(email, {
       "password": password,
       "name": name,
+      "dob": dob,
     });
 
     if (mounted) {
@@ -99,6 +112,10 @@ class _SignupPageState extends State<SignupPage> {
 
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  bool _isValidDob(String dob) {
+    return RegExp(r'^\d{6}$').hasMatch(dob);
   }
 
   @override
@@ -152,6 +169,26 @@ class _SignupPageState extends State<SignupPage> {
                     vertical: 16,
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _dobController,
+                decoration: InputDecoration(
+                  labelText: '생년월일 (YYMMDD)',
+                  hintText: '990101',
+                  hintStyle: TextStyle(color: theme.hintColor),
+                  filled: true,
+                  fillColor: theme.colorScheme.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
+                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16),
               TextField(

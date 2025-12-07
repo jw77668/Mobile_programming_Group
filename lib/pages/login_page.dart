@@ -38,9 +38,9 @@ class _LoginPageState extends State<LoginPage> {
 
     if (!accountsBox.containsKey(email)) {
       setState(() => _showFindAccount = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('존재하지 않는 계정입니다')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('존재하지 않는 계정입니다')));
       return;
     }
 
@@ -48,9 +48,9 @@ class _LoginPageState extends State<LoginPage> {
 
     if (user["password"] != password) {
       setState(() => _showFindAccount = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('비밀번호가 틀렸습니다')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('비밀번호가 틀렸습니다')));
       return;
     }
 
@@ -63,14 +63,32 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showFindEmailDialog() async {
     final nameController = TextEditingController();
+    final dobController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('이메일 찾기'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(labelText: '이름', hintText: '홍길동'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: '이름',
+                hintText: '홍길동',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: dobController,
+              decoration: const InputDecoration(
+                labelText: '생년월일 (YYMMDD)',
+                hintText: '990101',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -84,7 +102,8 @@ class _LoginPageState extends State<LoginPage> {
 
               for (var key in accountsBox.keys) {
                 final user = accountsBox.get(key);
-                if (user['name'] == nameController.text.trim()) {
+                if (user['name'] == nameController.text.trim() &&
+                    user['dob'] == dobController.text.trim()) {
                   foundEmail = key;
                   break;
                 }
@@ -122,18 +141,32 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showFindPasswordDialog() async {
     final emailController = TextEditingController();
+    final nameController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('비밀번호 찾기'),
-        content: TextField(
-          controller: emailController,
-          decoration: const InputDecoration(
-            labelText: '이메일',
-            hintText: 'email@domain.com',
-          ),
-          keyboardType: TextInputType.emailAddress,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: '이름',
+                hintText: '홍길동',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: '이메일',
+                hintText: 'email@domain.com',
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -144,9 +177,19 @@ class _LoginPageState extends State<LoginPage> {
             onPressed: () async {
               final accountsBox = Hive.box('accounts');
               final email = emailController.text.trim();
+              final name = nameController.text.trim();
 
               if (accountsBox.containsKey(email)) {
                 final user = accountsBox.get(email);
+
+                if (user['name'] != name) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('일치하는 정보가 없습니다')),
+                  );
+                  return;
+                }
+
                 final password = user['password'];
                 if (!mounted) return;
                 Navigator.of(context).pop();
