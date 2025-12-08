@@ -30,6 +30,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
   final FocusNode _inputFocusNode = FocusNode();
   final RagService _ragService = RagService();
   late ConfettiController _confettiController;
+  late ChatProvider _chatProvider;
+  bool _listenerAttached = false;
   bool _isBotReplying = false;
   bool _isGeneratingTitle = false;
   ChatState _chatState = ChatState.initializing;
@@ -42,22 +44,28 @@ class _ChatbotPageState extends State<ChatbotPage> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 1),
+    );
+    _chatProvider = context.read<ChatProvider>();
+    _chatProvider.addListener(_showTutorials);
+    _listenerAttached = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeChat();
     });
-    Provider.of<ChatProvider>(context, listen: false).addListener(_showTutorials);
   }
 
   @override
   void dispose() {
-    Provider.of<ChatProvider>(context, listen: false).removeListener(_showTutorials);
+    if (_listenerAttached) {
+      _chatProvider.removeListener(_showTutorials);
+    }
     _confettiController.dispose();
     _controller.dispose();
     _inputFocusNode.dispose();
     super.dispose();
   }
-  
+
   void _showTutorials() {
     _showLongPressTutorialIfFirstTime();
   }
@@ -76,7 +84,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
   Future<void> _initializeChat() async {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     if (widget.solution != null) {
-      if (chatProvider.messages.any((m) => m.id == widget.solution!.messageId)) {
+      if (chatProvider.messages.any(
+        (m) => m.id == widget.solution!.messageId,
+      )) {
         return;
       }
       await chatProvider.onSolutionSelected(widget.solution!);
@@ -103,13 +113,14 @@ class _ChatbotPageState extends State<ChatbotPage> {
       setState(() {
         _chatState = ChatState.ready;
         if (chatProvider.messages.isEmpty) {
-          chatProvider.addMessage(Message(
-            id: const Uuid().v4(),
-            role: 'assistant',
-            content:
-                '안녕하세요! \'${washer.washerName}\' 매뉴얼에 대해 무엇이든 물어보세요.',
-            createdAt: DateTime.now(),
-          ));
+          chatProvider.addMessage(
+            Message(
+              id: const Uuid().v4(),
+              role: 'assistant',
+              content: '안녕하세요! \'${washer.washerName}\' 매뉴얼에 대해 무엇이든 물어보세요.',
+              createdAt: DateTime.now(),
+            ),
+          );
         }
       });
     } catch (e) {
@@ -123,7 +134,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
   Future<void> _sendMessage() async {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     final currentWasher = chatProvider.currentChatWasher;
-    if (_controller.text.isNotEmpty && !_isBotReplying && currentWasher != null) {
+    if (_controller.text.isNotEmpty &&
+        !_isBotReplying &&
+        currentWasher != null) {
       String userMessageContent = _controller.text;
 
       Message? replyTo;
@@ -137,13 +150,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
         _cancelReply();
       }
 
-      await chatProvider.sendQuestion(userMessageContent,
-          pdfId: currentWasher.pdfId, replyTo: replyTo);
+      await chatProvider.sendQuestion(
+        userMessageContent,
+        pdfId: currentWasher.pdfId,
+        replyTo: replyTo,
+      );
     }
   }
 
   void _navigateToPdfPage(int docPage) {
-    final currentWasher = Provider.of<ChatProvider>(context, listen: false).currentChatWasher;
+    final currentWasher = Provider.of<ChatProvider>(
+      context,
+      listen: false,
+    ).currentChatWasher;
     if (currentWasher != null) {
       final pdfPage = ((docPage + 2) / 2).ceil();
 
@@ -158,7 +177,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   void _showFullManual() {
-    final currentWasher = Provider.of<ChatProvider>(context, listen: false).currentChatWasher;
+    final currentWasher = Provider.of<ChatProvider>(
+      context,
+      listen: false,
+    ).currentChatWasher;
     if (currentWasher != null) {
       Navigator.push(
         context,
@@ -251,9 +273,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
         title: const Text('증상 / 에러코드 진단'),
         content: TextField(
           controller: textController,
-          decoration: const InputDecoration(
-            hintText: '고장 증상이나 에러코드를 입력하세요.',
-          ),
+          decoration: const InputDecoration(hintText: '고장 증상이나 에러코드를 입력하세요.'),
           autofocus: true,
         ),
         actions: [
@@ -368,8 +388,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
     // Check if the last message is from the assistant and it's not the initial greeting.
     final lastMessage = chatProvider.messages.first;
-    if (lastMessage.role != 'assistant' || chatProvider.messages.length <= 1) return;
-    
+    if (lastMessage.role != 'assistant' || chatProvider.messages.length <= 1)
+      return;
+
     final settingsBox = Hive.box('user_settings');
     final sessionBox = Hive.box('session');
     final currentUser = sessionBox.get('current_user');
@@ -432,7 +453,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               Colors.blue,
               Colors.pink,
               Colors.orange,
-              Colors.purple
+              Colors.purple,
             ],
           ),
         ],
@@ -441,40 +462,62 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   Widget _buildBody(
-      ChatProvider chatProvider, ThemeData theme, WasherModel? currentWasher) {
+    ChatProvider chatProvider,
+    ThemeData theme,
+    WasherModel? currentWasher,
+  ) {
     if (currentWasher == null) {
       return Center(
-          child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Text(
-                '챗봇을 사용하려면 먼저 제품을 등록해주세요.\n[내 제품] 탭에서 제품을 선택할 수 있습니다.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: theme.hintColor),
-              )));
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Text(
+            '챗봇을 사용하려면 먼저 제품을 등록해주세요.\n[내 제품] 탭에서 제품을 선택할 수 있습니다.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: theme.hintColor),
+          ),
+        ),
+      );
     }
 
     if (_chatState == ChatState.initializing) {
       return const Center(
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        CircularProgressIndicator(),
-        SizedBox(height: 16), Text('챗봇 서버에 연결 중입니다...'),
-      ]));
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('챗봇 서버에 연결 중입니다...'),
+          ],
+        ),
+      );
     } else if (_chatState == ChatState.error) {
       return Center(
-          child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.error_outline, color: theme.colorScheme.error, size: 50),
-                const SizedBox(height: 16),
-                Text(_errorMessage ?? '알 수 없는 오류가 발생했습니다.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16)),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                    onPressed: () => _initialize(currentWasher),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('재시도')),
-              ])));
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: theme.colorScheme.error,
+                size: 50,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage ?? '알 수 없는 오류가 발생했습니다.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => _initialize(currentWasher),
+                icon: const Icon(Icons.refresh),
+                label: const Text('재시도'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return GestureDetector(
@@ -516,8 +559,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
           }
 
           return Column(
-            crossAxisAlignment:
-                isAssistant ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+            crossAxisAlignment: isAssistant
+                ? CrossAxisAlignment.start
+                : CrossAxisAlignment.end,
             children: [
               GestureDetector(
                 onLongPress: () {
@@ -543,7 +587,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
                           SimpleDialogOption(
                             onPressed: () {
                               Navigator.pop(context);
-                              Clipboard.setData(ClipboardData(text: message.content));
+                              Clipboard.setData(
+                                ClipboardData(text: message.content),
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('메시지가 복사되었습니다.'),
@@ -581,14 +627,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   );
                 },
                 child: ChatBubble(
-                    message: message,
-                    isMe: !isAssistant,
-                    fontSize: _fontSize * _scale),
+                  message: message,
+                  isMe: !isAssistant,
+                  fontSize: _fontSize * _scale,
+                ),
               ),
               if (isAssistant)
                 Padding(
                   padding: const EdgeInsets.only(
-                      left: 8.0, right: 16.0, bottom: 8.0, top: 8.0),
+                    left: 8.0,
+                    right: 16.0,
+                    bottom: 8.0,
+                    top: 8.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -597,7 +648,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       if (message.options.isNotEmpty && message.flowId != null)
                         _buildOptionButtons(message.flowId!, message.options),
                       _buildAssistantButtons(
-                          isLatestMessage, message, previousMessage),
+                        isLatestMessage,
+                        message,
+                        previousMessage,
+                      ),
                     ],
                   ),
                 ),
@@ -612,44 +666,42 @@ class _ChatbotPageState extends State<ChatbotPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '관련 페이지',
-          style: TextStyle(
-            fontSize: 12,
-            color: theme.hintColor,
-          ),
-        ),
+        Text('관련 페이지', style: TextStyle(fontSize: 12, color: theme.hintColor)),
         const SizedBox(height: 6),
         Wrap(
           spacing: 8.0,
           runSpacing: 4.0,
           children: pages
-              .map((page) => TextButton.icon(
-                    style: TextButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primaryContainer,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
+              .map(
+                (page) => TextButton.icon(
+                  style: TextButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    icon: Icon(
-                      Icons.auto_stories_outlined,
-                      size: 16,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  icon: Icon(
+                    Icons.auto_stories_outlined,
+                    size: 16,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                  label: Text(
+                    'p.$page',
+                    style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
-                    label: Text(
-                      'p.$page',
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                    onPressed: () => _navigateToPdfPage(page),
-                  ))
+                  ),
+                  onPressed: () => _navigateToPdfPage(page),
+                ),
+              )
               .toList(),
         ),
       ],
@@ -661,18 +713,24 @@ class _ChatbotPageState extends State<ChatbotPage> {
       spacing: 8.0,
       runSpacing: 4.0,
       children: options
-          .map((choice) => ElevatedButton(
-                onPressed: () => _continueFlow(flowId, choice),
-                child: Text(choice),
-              ))
+          .map(
+            (choice) => ElevatedButton(
+              onPressed: () => _continueFlow(flowId, choice),
+              child: Text(choice),
+            ),
+          )
           .toList(),
     );
   }
 
   Widget _buildAssistantButtons(
-      bool isLatest, Message message, Message? previousMessage) {
+    bool isLatest,
+    Message message,
+    Message? previousMessage,
+  ) {
     final showExpandButton = message.isExpandable && !message.isExpanded;
-    final showSolvedButton = isLatest &&
+    final showSolvedButton =
+        isLatest &&
         message.flowId == null &&
         previousMessage != null &&
         previousMessage.role == 'user';
@@ -702,15 +760,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               icon: _isGeneratingTitle
                   ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white70),
+                        strokeWidth: 2,
+                        color: Colors.white70,
+                      ),
                     )
                   : const Icon(Icons.check_circle_outline, size: 18),
               label: Text(_isGeneratingTitle ? '저장 중...' : '해결됐어요!'),
@@ -726,116 +788,136 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Column(children: [
-        if (isLoading)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2)),
-              SizedBox(width: 8), Text('답변을 생성 중입니다...'),
-            ]),
-          ),
-        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: canSend ? _showExtraFeaturesMenu : null,
-            tooltip: '추가 기능',
-          ),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Column(
+      child: Column(
+        children: [
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (_replyingToMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12.0, vertical: 8.0),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12.0),
-                          border: Border.all(
-                            color: theme.dividerColor,
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _replyingToMessage!.role == 'user'
-                                        ? '나에게 답장'
-                                        : '챗봇에게 답장',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _replyingToMessage!.content
-                                        .replaceAll('\n', ' '),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        color: theme.colorScheme.onSurface),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: _cancelReply,
-                              borderRadius: BorderRadius.circular(24),
-                              child: const Icon(Icons.close, size: 20),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  TextField(
-                    controller: _controller,
-                    focusNode: _inputFocusNode,
-                    decoration: InputDecoration(
-                      hintText: canSend ? '메시지를 입력하세요...' : '챗봇을 준비 중입니다...',
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                    ),
-                    onSubmitted: canSend ? (_) => _sendMessage() : null,
-                    enabled: canSend,
-                    keyboardType: TextInputType.multiline,
-                    minLines: 1,
-                    maxLines: 5,
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
+                  SizedBox(width: 8),
+                  Text('답변을 생성 중입니다...'),
                 ],
               ),
             ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: canSend ? _showExtraFeaturesMenu : null,
+                tooltip: '추가 기능',
+              ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    children: [
+                      if (_replyingToMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                              vertical: 8.0,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12.0),
+                              border: Border.all(
+                                color: theme.dividerColor,
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _replyingToMessage!.role == 'user'
+                                            ? '나에게 답장'
+                                            : '챗봇에게 답장',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _replyingToMessage!.content.replaceAll(
+                                          '\n',
+                                          ' ',
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: theme.colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: _cancelReply,
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: const Icon(Icons.close, size: 20),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      TextField(
+                        controller: _controller,
+                        focusNode: _inputFocusNode,
+                        decoration: InputDecoration(
+                          hintText: canSend
+                              ? '메시지를 입력하세요...'
+                              : '챗봇을 준비 중입니다...',
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                        onSubmitted: canSend ? (_) => _sendMessage() : null,
+                        enabled: canSend,
+                        keyboardType: TextInputType.multiline,
+                        minLines: 1,
+                        maxLines: 5,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.send),
+                onPressed: canSend ? _sendMessage : null,
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
           ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: canSend ? _sendMessage : null,
-            style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-            ),
-          ),
-          const SizedBox(width: 4),
-        ]),
-      ]),
+        ],
+      ),
     );
   }
 }
