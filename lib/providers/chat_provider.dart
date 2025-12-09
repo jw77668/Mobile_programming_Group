@@ -101,7 +101,8 @@ class ChatProvider extends ChangeNotifier {
     _chatDataService.saveChatData(_userEmail!, _chatData);
   }
 
-  Future<void> sendQuestion(String question, {required String pdfId, Message? replyTo}) async {
+  Future<void> sendQuestion(String question,
+      {required String pdfId, Message? replyTo}) async {
     if (question.isEmpty || _userEmail == null) return;
 
     final userMessage = Message(
@@ -111,29 +112,50 @@ class ChatProvider extends ChangeNotifier {
       createdAt: DateTime.now(),
       replyTo: replyTo,
     );
-    addMessage(userMessage);
+    addMessage(userMessage); // 새 메시지를 대화 목록에 추가
 
     _setLoading(true);
 
     try {
+      // "물어보기" 시에는 자세한 답변을 받기 위해 shortMode를 false로 설정합니다.
       final bool isShortMode = replyTo == null;
-      List<Message> contextMessages;
 
+      // AI에게 전달할 대화 기록 (방금 보낸 메시지 제외)
+      final history = messages.sublist(1).reversed.toList();
+
+      String questionForRag = question; // 메뉴얼 검색(RAG)에 사용할 질문 (기본값: 현재 질문)
+
+      // "물어보기" 상황일 경우, 메뉴얼 검색에 사용할 질문을 재구성합니다.
       if (replyTo != null) {
-        final replyToIndex = messages.indexWhere((m) => m.id == replyTo.id);
-        if (replyToIndex != -1) {
-          contextMessages = messages.sublist(replyToIndex);
+        final Message targetMessage = replyTo;
+
+        if (targetMessage.role == 'assistant') {
+          // 챗봇의 답변에 "물어보기"를 한 경우:
+          // -> 그 답변을 유도했던 '사용자의 원래 질문'을 찾아 검색에 사용합니다.
+          final assistantMessageIndex =
+          messages.indexWhere((m) => m.id == targetMessage.id);
+
+          if (assistantMessageIndex != -1) {
+            // 시간 순으로 이전 대화(리스트에서는 더 높은 인덱스)를 거슬러 올라가 user 질문을 찾습니다.
+            for (var i = assistantMessageIndex + 1; i < messages.length; i++) {
+              if (messages[i].role == 'user') {
+                questionForRag = messages[i].content; // 원래 질문을 RAG 검색에 사용
+                break;
+              }
+            }
+          }
         } else {
-          contextMessages = messages.sublist(1);
+          // 사용자 본인의 말풍선에 "물어보기"를 한 경우:
+          // -> 해당 말풍선의 내용을 검색에 사용합니다.
+          questionForRag = targetMessage.content;
         }
-      } else {
-        contextMessages = messages.sublist(1);
       }
 
+      // `search` API 호출
       final ragResponse = await _ragService.search(
-        question,
+        questionForRag,   // 메뉴얼 검색에 최적화된 질문
         pdfId: pdfId,
-        previousMessages: contextMessages.reversed.toList(),
+        previousMessages: history, // AI의 맥락 파악을 위한 전체 대화 기록
         shortMode: isShortMode,
       );
 

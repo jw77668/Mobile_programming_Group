@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/message.dart';
 
 //새로운 키 필요
-const String _openRouterApiKey = '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';
+const String _openRouterApiKey = '';
 const String _openRouterApiUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
 class ConversationSummaryService {
