@@ -1,7 +1,22 @@
-<<<<<<< HEAD
-# smart_guide
+## 환경 설정
 
-A new Flutter project.
+### Dart 버전
+- Dart **3.8.1**
+
+### Flutter SDK 버전
+- Flutter **3.32.8** (stable)
+
+---
+
+### 필수 설정
+
+1. `lib/services/rag_service.dart` **6~7번 줄**
+   - `serverUrl`을 본인의 RAG 서버 URL로 변경
+
+2. `lib/services/conversation_summary_service.dart` **7번 줄**
+   - `_openRouterApiKey`에 OpenRouter API 키 입력  
+
+---
 
 ## Getting Started
 
@@ -15,6 +30,3 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
-=======
-# Mobile_programming_Group
->>>>>>> 01a56203f71a58b3d098b5a78e17e301d0fb0cb6
