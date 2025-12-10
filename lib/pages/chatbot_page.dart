@@ -435,28 +435,33 @@ class _ChatbotPageState extends State<ChatbotPage> {
           ),
         ],
       ),
-      body: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Column(
-            children: [
-              Expanded(child: _buildBody(chatProvider, theme, currentWasher)),
-              _buildInputArea(theme, currentWasher),
-            ],
-          ),
-          ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            shouldLoop: false,
-            colors: const [
-              Colors.green,
-              Colors.blue,
-              Colors.pink,
-              Colors.orange,
-              Colors.purple,
-            ],
-          ),
-        ],
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            Column(
+              children: [
+                Expanded(child: _buildBody(chatProvider, theme, currentWasher)),
+                _buildInputArea(theme, currentWasher),
+              ],
+            ),
+            ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple,
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
