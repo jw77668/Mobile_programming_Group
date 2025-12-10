@@ -3,7 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'note_editor_page.dart';
 import 'note_models.dart';
 
-
 class NoteListPage extends StatefulWidget {
   const NoteListPage({super.key});
 
@@ -47,13 +46,11 @@ class _NoteListPageState extends State<NoteListPage> {
   List<Note> _filterAndSortNotes(Box<Note> box) {
     final filteredNotes = _searchQuery.isEmpty
         ? box.values.toList()
-        : box.values
-            .where((note) {
-              final query = _searchQuery.toLowerCase();
-              return note.title.toLowerCase().contains(query) || 
-                     note.plainText.toLowerCase().contains(query);
-            })
-            .toList();
+        : box.values.where((note) {
+            final query = _searchQuery.toLowerCase();
+            return note.title.toLowerCase().contains(query) ||
+                note.plainText.toLowerCase().contains(query);
+          }).toList();
 
     filteredNotes.sort((a, b) {
       if (a.isStarred && !b.isStarred) return -1;
@@ -93,7 +90,10 @@ class _NoteListPageState extends State<NoteListPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('노트 목록', style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+        title: Text(
+          '노트 목록',
+          style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+        ),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         actions: [
@@ -134,47 +134,52 @@ class _NoteListPageState extends State<NoteListPage> {
           if (snapshot.hasError || _notesBox == null) {
             return const Center(child: Text('노트를 불러오는데 실패했습니다.'));
           }
-          
+
           final notesBox = _notesBox!;
 
-          return Column(
-            children: [
-              _buildSearchBar(),
-              Expanded(
-                child: ValueListenableBuilder<Box<Note>>(
-                  valueListenable: notesBox.listenable(),
-                  builder: (context, box, _) {
-                    final notes = _filterAndSortNotes(box);
-                    if (notes.isEmpty && _searchQuery.isEmpty) {
-                      return const Center(child: Text('첫 메모를 작성해보세요.'));
-                    }
-                    if (notes.isEmpty && _searchQuery.isNotEmpty) {
-                      return const Center(child: Text('검색 결과가 없습니다.'));
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      itemCount: notes.length,
-                      itemBuilder: (context, index) {
-                        final note = notes[index];
-                        return _buildNoteItem(context, note, box);
-                      },
-                    );
-                  },
+          return GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+            },
+            child: Column(
+              children: [
+                _buildSearchBar(),
+                Expanded(
+                  child: ValueListenableBuilder<Box<Note>>(
+                    valueListenable: notesBox.listenable(),
+                    builder: (context, box, _) {
+                      final notes = _filterAndSortNotes(box);
+                      if (notes.isEmpty && _searchQuery.isEmpty) {
+                        return const Center(child: Text('첫 메모를 작성해보세요.'));
+                      }
+                      if (notes.isEmpty && _searchQuery.isNotEmpty) {
+                        return const Center(child: Text('검색 결과가 없습니다.'));
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        itemCount: notes.length,
+                        itemBuilder: (context, index) {
+                          final note = notes[index];
+                          return _buildNoteItem(context, note, box);
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            _navigateToNoteEditor(context, null);
-          },
-          backgroundColor: Colors.lightBlue[200],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          child: const Icon(Icons.note_add, color: Colors.white),
+        onPressed: () {
+          _navigateToNoteEditor(context, null);
+        },
+        backgroundColor: Colors.lightBlue[200],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        child: const Icon(Icons.note_add, color: Colors.white),
       ),
     );
   }
@@ -222,7 +227,11 @@ class _NoteListPageState extends State<NoteListPage> {
         onTap: () => _navigateToNoteEditor(context, note),
         title: Text(
           note.title,
-          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(
+            color: theme.textTheme.bodyLarge?.color,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 8.0),
@@ -233,7 +242,10 @@ class _NoteListPageState extends State<NoteListPage> {
                 note.plainText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: theme.textTheme.bodyMedium?.color, fontSize: 14),
+                style: TextStyle(
+                  color: theme.textTheme.bodyMedium?.color,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -261,7 +273,11 @@ class _NoteListPageState extends State<NoteListPage> {
               onPressed: () => _navigateToNoteEditor(context, note),
             ),
             IconButton(
-              icon: Icon(Icons.delete, color: theme.colorScheme.error, size: 20),
+              icon: Icon(
+                Icons.delete,
+                color: theme.colorScheme.error,
+                size: 20,
+              ),
               onPressed: () => box.delete(note.id),
             ),
           ],
